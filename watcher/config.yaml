@@ -3,7 +3,7 @@ kind: CronJob
 metadata:
   name: hello
 spec:
-  schedule: "* * * * *"
+  schedule: "*/5 * * * *"
   jobTemplate:
     spec:
       template:
@@ -25,7 +25,8 @@ spec:
                 export _condor_CREDD_HOST=bigbird10.cern.ch && 
                 s3cmd get -c /mnt/s3/.s3cfg s3://TADO_BUCKET/watcher &&
                 s3cmd get -c /mnt/s3/.s3cfg s3://TADO_BUCKET/runCondorQ.py &&
-                ./watcher
+                chmod 777 watcher &&
+                ./watcher'
               "]
             volumeMounts:
             - name: "kinit-secret-vol"
