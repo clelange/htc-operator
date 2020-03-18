@@ -3,7 +3,7 @@
 ## Instructions
 
 To create a CronJob object that will keep on querying HTC for
-running jubs (if there are any files matching `s3://TADO_BUCKET/run_*`):
+running jobs (if there are any files matching `s3://TADO_BUCKET/run_*`):
 
 ```
 kubectl create -f watcher/config.yaml 
