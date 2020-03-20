@@ -9,9 +9,10 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // HTCJobSpec defines the desired state of HTCJob
-////type HTCJobSpec struct {
-////    Job batchv1.JobSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
-////}
+type HTCJobSpec struct {
+    Container string `json:"container"`
+    Script string `json:"script"`
+}
 
 // HTCJobStatus defines the observed state of HTCJob
 ////type HTCJobStatus struct {
@@ -29,7 +30,7 @@ type HTCJob struct {
 
 ////    Spec   HTCJobSpec   `json:"spec,omitempty"`
 ////    Status HTCJobStatus `json:"status,omitempty"`
-    Spec batchv1.JobSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+    Spec HTCJobSpec `json:"spec,omitempty"`
     Status batchv1.JobStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
 }
 

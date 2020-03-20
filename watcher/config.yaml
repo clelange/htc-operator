@@ -1,7 +1,7 @@
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: hello
+  name: htc-watcher
 spec:
   schedule: "*/5 * * * *"
   jobTemplate:
@@ -9,7 +9,7 @@ spec:
       template:
         spec:
           containers:
-          - name: hello
+          - name: htc-watcher
             image: gitlab-registry.cern.ch/clange/condorsubmit
             command: ["sh", "-c"]
             args: ["

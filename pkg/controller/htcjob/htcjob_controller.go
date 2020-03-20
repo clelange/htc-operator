@@ -101,7 +101,6 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (reconcile.Result
   //////////////////
  // PARENT FOUND //
 //////////////////
-
     // if the complete_ exists, ch.ange the status to "Complete"
     // and remove the file from the bucket
     bucket := "TADO_BUCKET"
@@ -117,7 +116,7 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (reconcile.Result
         return reconcile.Result{}, nil
     }
     // Create the job
-    job := r.condorSubmitJob(instance, instance.Name)
+    job := r.condorSubmitJob(instance)
     // Set HTCJob instance as the owner and controller
     if err := controllerutil.SetControllerReference(instance, job, r.scheme); err != nil {
         return reconcile.Result{}, err
@@ -140,7 +139,6 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (reconcile.Result
             reqLogger.Error(err, "Failed to update HTCJob status")
             return reconcile.Result{}, err
         }
-
         // Pod created successfully - don't requeue
         return reconcile.Result{RequeueAfter: time.Second * 10}, nil
     } else if err != nil {

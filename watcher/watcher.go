@@ -9,6 +9,7 @@ import (
     "bufio"
     "regexp"
     "strings"
+    "time"
     "github.com/aws/aws-sdk-go/aws"
     "github.com/aws/aws-sdk-go/aws/credentials"
     "github.com/aws/aws-sdk-go/aws/awserr"
@@ -56,6 +57,7 @@ func main() {
     }
     writer.Flush()
     // call python script
+    fmt.Println("HTC query @ " + time.Now().String())
     out, err := exec.Command("python", "/scratch/runCondorQ.py", tmpFile.Name()).Output()
     if err != nil {
         fmt.Printf("Failed to run the pyhon script: %s", err)
