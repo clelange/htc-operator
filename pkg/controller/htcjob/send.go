@@ -181,22 +181,22 @@ func updateS3Objects(bucket string, job_name string) bool {
     for _, item := range result.Contents {
         if fmt.Sprintf("complete_%s_condor.out", job_name) == *(item.Key) {
             filenameInSlice = true
-            input := &s3.DeleteObjectInput{
-                Bucket: aws.String(bucket),
-                Key:    aws.String(*(item.Key)),
-            }
-            _, err := svc.DeleteObject(input)
-            if err != nil {
-                if aerr, ok := err.(awserr.Error); ok {
-                    switch aerr.Code() {
-                    default:
-                        fmt.Println(aerr.Error())
-                    }
-                } else {
-                    fmt.Println(err.Error())
-                }
-                return false
-            }
+            //input := &s3.DeleteObjectInput{
+            //    Bucket: aws.String(bucket),
+            //    Key:    aws.String(*(item.Key)),
+            //}
+            //_, err := svc.DeleteObject(input)
+            //if err != nil {
+            //    if aerr, ok := err.(awserr.Error); ok {
+            //        switch aerr.Code() {
+            //        default:
+            //            fmt.Println(aerr.Error())
+            //        }
+            //    } else {
+            //        fmt.Println(err.Error())
+            //    }
+            //    return false
+            //}
         }
     }
     return filenameInSlice

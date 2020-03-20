@@ -133,21 +133,37 @@ func moveS3Object(s3Config *aws.Config, bucket string, nameA string, nameB strin
         Key:    aws.String(nameA),
     }
     // tempfile to store the downloaded file
-    tmpFile, err := ioutil.TempFile(os.TempDir(), "")
+    tmpFileA, err := ioutil.TempFile(os.TempDir(), "")
     if err != nil {
         fmt.Println("Cannot create temporary file", err)
         return
     }
-    defer os.Remove(tmpFile.Name())
-    _, err = downloader.Download(tmpFile, input)
+    // download
+    _, err = downloader.Download(tmpFileA, input)
     if err != nil {
-        fmt.Printf("Unable to download item %q, %v", nameA, tmpFile)
+        fmt.Printf("Unable to download item %q, %v", nameA, tmpFileA)
         return
     }
+    // write ids to fileB
+    fileRead, err := os.Open(tmpFileA.Name())
+    if err != nil {
+        log.Fatal(err)
+    }
+    reRepId := regexp.MustCompile("^.*Proc (.*):$")
+    fscanner := bufio.NewScanner(tmpFileA)
+    var outputString string
+    for fscanner.Scan() {
+        currentLine := fscanner.Text()
+        if matched, _ := regexp.MatchString(`\*\* Proc`, currentLine); matched {
+            outputString += fmt.Sprintf("%s\n", reRepId.ReplaceAllString(currentLine, "$1"))
+        }
+    }
+    fileRead.Close()
     // delete the old one
     deleteS3Object(s3Config, bucket, nameA)
     // add the new one
-    putS3Object(s3Config, bucket, tmpFile.Name(), nameB)
+    putS3Object(s3Config, bucket, outputString, nameB)
+    os.Remove(tmpFileA.Name())
 }
 
 func getJobIds(s3Config *aws.Config, bucket string, filename string) []string {

@@ -113,6 +113,31 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (reconcile.Result
             reqLogger.Error(err, "Failed to update HTCJob status")
             return reconcile.Result{}, err
         }
+        job := r.transferCondorData(instance)
+        found := &batchv1.Job{}
+        err = r.client.Get(context.TODO(), types.NamespacedName{Name: job.Name, Namespace: job.Namespace}, found)
+        if err != nil && errors.IsNotFound(err) {
+            if err := controllerutil.SetControllerReference(instance, job, r.scheme); err != nil {
+                return reconcile.Result{}, err
+            }
+            reqLogger.Info("Creating a new Job", "Job.Namespace", job.Namespace, "Job.Name", job.Name)
+            err = r.client.Create(context.TODO(), job)
+            if err != nil {
+                return reconcile.Result{}, err
+            }
+            // add to number of active
+            instance.Status.Active += 1
+            err := r.client.Status().Update(context.TODO(), instance)
+            if err != nil {
+                fmt.Println("FAIL")
+                reqLogger.Error(err, "Failed to update HTCJob status")
+                return reconcile.Result{}, err
+            }
+            // Pod created successfully - don't requeue
+            return reconcile.Result{}, nil
+        } else if err != nil {
+            return reconcile.Result{RequeueAfter: time.Second * 10}, nil
+        }
         return reconcile.Result{}, nil
     }
     // Create the job
