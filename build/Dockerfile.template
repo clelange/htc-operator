@@ -43,7 +43,7 @@ ADD condorsubmit/etc/tzero /etc/modulefiles/lxbatch/
 
 ENV OPERATOR=/usr/local/bin/htc-operator \
     USER_UID=1001 \
-    USER_NAME=tbareiki
+    USER_NAME=<YOUR_USER_NAME>
 
 # install operator binary
 COPY build/_output/bin/htc-operator ${OPERATOR}

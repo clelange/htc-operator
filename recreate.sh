@@ -1,5 +1,6 @@
 #operator-sdk generate k8s
 # build the cloudevents receiver
+sed "s/<YOUR_USER_NAME>/$USER/g" build/Dockerfile.template > build/Dockerfile
 go build -o build/bin/receiver cloudevents/receiver.go
 s3cmd put build/bin/receiver s3://TADO_BUCKET/receiver
 # build the cloudevents sender
@@ -12,10 +13,10 @@ kubectl create configmap s3cfg --from-file=$HOME/.s3cfg
 
 kubectl delete -f deploy/operator.yaml
 kubectl delete -f deploy/crds/htc.cern.ch_htcjobs_crd.yaml
-kubectl delete -f cloudevents/config.yaml
+#kubectl delete -f cloudevents/config.yaml
 
 kubectl create -f deploy/operator.yaml
 kubectl create -f deploy/crds/htc.cern.ch_htcjobs_crd.yaml
 kubectl create -f deploy/crds/htc.cern.ch_v1alpha1_htcjob_cr.yaml
 # cloudevents
-kubectl create -f cloudevents/config.yaml
+#kubectl create -f cloudevents/config.yaml

@@ -18,7 +18,7 @@ spec:
           # Replace this with the built image name
           image: xkxgygmoqkguuddnkz/htc-operator
           command: ["sh", "-c"]
-          args: ["htc-operator"]
+          args: ["receiver & htc-operator"]
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
@@ -31,3 +31,35 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "htc-operator"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudevents-service
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 8080
+  selector:
+    name: htc-operator
+#    app: cloudevents-loadbalance
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: cloudevents-ingress
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.frontend.entryPoints: "http"
+spec:
+  rules:
+  - host: cms-batch-test.cern.ch
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: cloudevents-service
+          servicePort: 80

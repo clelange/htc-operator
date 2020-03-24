@@ -25,7 +25,7 @@ type Response struct {
 
 func main() {
     ctx := context.Background()
-    p, err := cloudevents.NewHTTP(cloudevents.WithPort(80))
+    p, err := cloudevents.NewHTTP(cloudevents.WithPort(8080))
     if err != nil {
         log.Fatalf("failed to create protocol: %s", err.Error())
     }

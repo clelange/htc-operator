@@ -1,0 +1,3 @@
+[submodule "condorsubmit"]
+	path = condorsubmit
+	url = ssh://git@gitlab.cern.ch:7999/clange/condorsubmit.git

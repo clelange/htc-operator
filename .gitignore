@@ -79,3 +79,4 @@ secrets/
 tmp/
 build/bin
 build/_output
+build/Dockerfile.bak*
