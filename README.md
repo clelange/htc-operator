@@ -2,6 +2,10 @@
 
 ## Instructions
 
+First of all, a couple of secrets are needed:
+- a `gitlab-registry` secret with access to gitlab-registry.cern.ch
+- a `kinit-secret` containing a username and password for the job submittion with `condorsubmit` container
+
 To create a CronJob object that will keep on querying HTC for
 running jobs (if there are any files matching `s3://TADO_BUCKET/run_*`):
 
@@ -9,9 +13,18 @@ running jobs (if there are any files matching `s3://TADO_BUCKET/run_*`):
 kubectl create -f watcher/config.yaml 
 ```
 
-To create the controller, CRD and a sample CR:
-
+To create the 
+- controller
+- CRD
+- cloudevents watcher (service, deployment, ingress)
+- a sample CR
+:
 ```
+# need to be created only once
+kubectl create -f deploy/role_binding.yaml 
+kubectl create -f deploy/service_account.yaml 
+kubectl create -f deploy/role.yaml 
+# script to be run after modifications to recreate resources
 ./recreate.sh
 ```
 

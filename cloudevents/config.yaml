@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudevents-htc-watcher
+  labels:
+    app: cloudevents-loadbalance
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudevents-loadbalance
+  template:
+    metadata:
+      labels:
+        app: cloudevents-loadbalance
+    spec:
+      containers:
+      - name: pi
+        image: centos
+        command: ["sh", "-c"]
+        args: ["
+          yum -y install python3 &&
+          pip3 install s3cmd &&
+          echo 'host_base = s3.cern.ch\nhost_bucket = %(bucket)s.s3.cern.ch\naccess_key = PJE22MGQ8QO45CKI496K\nsecret_key = 8BnRJcxuOain8fLBxT44IfFMNgku7huHoo8mK8NP\nuse_https = True' > ~/.s3cfg &&
+          s3cmd get s3://TADO_BUCKET/receiver &&
+          chmod +x receiver && ./receiver
+          "]
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudevents-service
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 80
+  selector:
+    app: cloudevents-loadbalance
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: cloudevents-ingress
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.frontend.entryPoints: "http"
+spec:
+  rules:
+  - host: cms-batch-test.cern.ch
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: cloudevents-service
+          servicePort: 80

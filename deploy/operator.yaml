@@ -17,8 +17,8 @@ spec:
         - name: htc-operator
           # Replace this with the built image name
           image: xkxgygmoqkguuddnkz/htc-operator
-          command:
-          - htc-operator
+          command: ["sh", "-c"]
+          args: ["htc-operator"]
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE

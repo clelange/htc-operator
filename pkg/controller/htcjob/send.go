@@ -30,15 +30,17 @@ func (r *ReconcileHTCJob) condorSubmitJob(v *htcv1alpha1.HTCJob) *batchv1.Job {
         "       --home $PWD:/srv " +
         "       --bind /cvmfs " +
         fmt.Sprintf("docker://%s ", v.Spec.Container) +
-        fmt.Sprintf("./script_%s.sh", v.Name)
+        fmt.Sprintf("./script_%s.sh\n", v.Name) +
+        "./sender\n"
     job_sub := "universe                = vanilla\n" +
         "executable              = job.sh\n" +
-        "should_transfer_files   = IF_NEEDED\n" +
+        "should_transfer_files   = Yes\n" +
         "when_to_transfer_output = ON_EXIT\n" +
         "output                  = out.$(ClusterId).$(ProcId)\n" +
         "error                   = err.$(ClusterId).$(ProcId)\n" +
         "log                     = log.$(ClusterId).$(ProcId)\n" +
-        fmt.Sprintf("transfer_input_files    = script_%s.sh\n", v.Name) +
+        fmt.Sprintf("transfer_input_files    = script_%s.sh, sender\n", v.Name) +
+        "environment             = \"JOB_NAME=" + v.Name + "\"\n" +
         "queue 1"
     // put the script to s3
     accessKey := "PJE22MGQ8QO45CKI496K"
@@ -105,7 +107,9 @@ func (r *ReconcileHTCJob) condorSubmitJob(v *htcv1alpha1.HTCJob) *batchv1.Job {
                             fmt.Sprintf("  echo '%s' |base64 --decode > job.sub && ", base64.StdEncoding.EncodeToString([]byte(job_sub))) +
                             fmt.Sprintf("  echo '%s' |base64 --decode > job.sh && ", base64.StdEncoding.EncodeToString([]byte(job_sh))) +
                             fmt.Sprintf("  s3cmd -c /mnt/s3cfg/..data/.s3cfg get s3://TADO_BUCKET/script_%s.sh && ", v.Name) +
+                            "  s3cmd -c /mnt/s3cfg/..data/.s3cfg get s3://TADO_BUCKET/sender && " +
                             fmt.Sprintf("  chmod 777 script_%s.sh && ", v.Name) +
+                            "  chmod 777 sender && " +
                             "  condor_submit -spool -verbose job.sub > condor.out && " +
                             "  cat condor.out && " +
                             "  s3cmd -c /mnt/s3cfg/..data/.s3cfg put condor.out" +

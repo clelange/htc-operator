@@ -9,3 +9,6 @@ spec:
     echo "AAA"
     echo "BBB"
     echo CCC
+    echo "JOB_NAME"
+    echo $JOB_NAME
+    echo "JOB_NAME"

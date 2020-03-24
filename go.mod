@@ -4,6 +4,8 @@ go 1.13
 
 require (
 	github.com/aws/aws-sdk-go v1.17.7
+	github.com/cloudevents/sdk-go v1.1.2
+	github.com/cloudevents/sdk-go/v2 v2.0.0-preview6 // indirect
 	github.com/jdob/visitors-operator v0.0.0-20191024200828-5b18c79fe98b
 	github.com/operator-framework/operator-sdk v0.15.2
 	github.com/spf13/pflag v1.0.5
