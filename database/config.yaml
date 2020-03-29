@@ -1,0 +1,77 @@
+apiVersion: storage.k8s.io/v1beta1
+kind: StorageClass
+metadata:
+  name: csi-cephfs-cms
+provisioner: manila-provisioner
+parameters:
+  type: "Geneva CephFS Testing"
+  zones: nova
+  osSecretName: os-trustee
+  osSecretNamespace: kube-system
+  protocol: CEPHFS
+  backend: csi-cephfs
+  csi-driver: cephfs.csi.ceph.com
+  # the share should be of size > 1
+  # id for some_share from `manila list`
+  osShareID: 19e5db06-6ce9-4357-9cca-0464008fbacb
+  # id from `manila access-list some_share`
+  osShareAccessID: d077ae20-ba01-472e-bb3e-dbde9295ded1
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-cephfs-cms
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: csi-cephfs-cms
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: psql-server
+  labels:
+    app: psql-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: psql-server
+  template:
+    metadata:
+      labels:
+        name: psql-server
+    spec:
+      containers:
+      - name: postgres
+        image: postgres
+        ports:
+        - containerPort: 5432
+        env:
+        - name: PGDATA
+          value: "/data/postgres"
+        - name: POSTGRES_PASSWORD
+          value: "pgpasswd"
+        volumeMounts:
+          - mountPath: /data
+            name: vol-cephfs-cms
+      volumes:
+      - name: vol-cephfs-cms
+        persistentVolumeClaim:
+          claimName: pvc-cephfs-cms
+          readOnly: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: psql-service
+spec:
+  type: NodePort
+  ports:
+  - port: 5432
+    nodePort: 30303
+  selector:
+    name: psql-server
