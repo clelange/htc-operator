@@ -13,10 +13,7 @@ kubectl create configmap s3cfg --from-file=$HOME/.s3cfg
 
 kubectl delete -f deploy/operator.yaml
 kubectl delete -f deploy/crds/htc.cern.ch_htcjobs_crd.yaml
-#kubectl delete -f cloudevents/config.yaml
 
 kubectl create -f deploy/operator.yaml
 kubectl create -f deploy/crds/htc.cern.ch_htcjobs_crd.yaml
 kubectl create -f deploy/crds/htc.cern.ch_v1alpha1_htcjob_cr.yaml
-# cloudevents
-#kubectl create -f cloudevents/config.yaml

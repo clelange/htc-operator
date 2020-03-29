@@ -20,6 +20,9 @@ spec:
           command: ["sh", "-c"]
           args: ["receiver & htc-operator"]
           imagePullPolicy: Always
+          volumeMounts:
+          - mountPath: /mnt/kinit
+            name: kinit-secret-vol
           env:
             - name: WATCH_NAMESPACE
               valueFrom:
@@ -31,6 +34,10 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "htc-operator"
+      volumes:
+      - name: kinit-secret-vol
+        secret:
+          secretName: kinit-secret
 ---
 apiVersion: v1
 kind: Service
@@ -45,7 +52,6 @@ spec:
     targetPort: 8080
   selector:
     name: htc-operator
-#    app: cloudevents-loadbalance
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress

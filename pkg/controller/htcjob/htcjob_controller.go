@@ -2,19 +2,17 @@ package htcjob
 
 import (
     "context"
-    "fmt"
     "time"
     htcv1alpha1 "htc-operator/pkg/apis/htc/v1alpha1"
 
     corev1 "k8s.io/api/core/v1"
-    batchv1 "k8s.io/api/batch/v1"
     "k8s.io/apimachinery/pkg/api/errors"
     //metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
     "k8s.io/apimachinery/pkg/runtime"
-    "k8s.io/apimachinery/pkg/types"
+    //"k8s.io/apimachinery/pkg/types"
     "sigs.k8s.io/controller-runtime/pkg/client"
     "sigs.k8s.io/controller-runtime/pkg/controller"
-    "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+    //"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
     "sigs.k8s.io/controller-runtime/pkg/handler"
     logf "sigs.k8s.io/controller-runtime/pkg/log"
     "sigs.k8s.io/controller-runtime/pkg/manager"
@@ -43,20 +41,23 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
     // Create a new controller
-    c, err := controller.New("htcjob-controller", mgr, controller.Options{Reconciler: r})
+    c, err := controller.New("htcjob-controller",
+        mgr, controller.Options{Reconciler: r})
     if err != nil {
         return err
     }
 
     // Watch for changes to primary resource HTCJob
-    err = c.Watch(&source.Kind{Type: &htcv1alpha1.HTCJob{}}, &handler.EnqueueRequestForObject{})
+    err = c.Watch(&source.Kind{Type: &htcv1alpha1.HTCJob{}},
+        &handler.EnqueueRequestForObject{})
     if err != nil {
         return err
     }
 
     // TODO(user): Modify this to be the types you create that are owned by the primary resource
     // Watch for changes to secondary resource Pods and requeue the owner HTCJob
-    err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
+    err = c.Watch(&source.Kind{Type: &corev1.Pod{}},
+        &handler.EnqueueRequestForOwner{
         IsController: true,
         OwnerType:    &htcv1alpha1.HTCJob{},
     })
@@ -85,8 +86,10 @@ type ReconcileHTCJob struct {
 // Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
-func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-    reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
+func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
+    reconcile.Result, error) {
+    reqLogger := log.WithValues("Request.Namespace", request.Namespace,
+        "Request.Name", request.Name)
     reqLogger.Info("Reconciling HTCJob")
 
     instance := &htcv1alpha1.HTCJob{}
@@ -98,102 +101,43 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (reconcile.Result
         }
         return reconcile.Result{}, err
     }
-  //////////////////
- // PARENT FOUND //
-//////////////////
-    // if the complete_ exists, ch.ange the status to "Complete"
-    // and remove the file from the bucket
-    bucket := "TADO_BUCKET"
-    if updateS3Objects(bucket, instance.Name) {
-        instance.Status.Succeeded += 1
-        instance.Status.Active -= 1
-        err := r.client.Status().Update(context.TODO(), instance)
+    // Check if the Job already exists
+    if instance.Status.Active != 1 && instance.Status.Succeeded != 1 {
+        // add to number of active
+        instance.Status.Active = 1
+        err = r.client.Status().Update(context.TODO(), instance)
         if err != nil {
-            fmt.Println("FAIL")
             reqLogger.Error(err, "Failed to update HTCJob status")
             return reconcile.Result{}, err
         }
-        job := r.transferCondorData(instance)
-        found := &batchv1.Job{}
-        err = r.client.Get(context.TODO(), types.NamespacedName{Name: job.Name, Namespace: job.Namespace}, found)
-        if err != nil && errors.IsNotFound(err) {
-            if err := controllerutil.SetControllerReference(instance, job, r.scheme); err != nil {
-                return reconcile.Result{}, err
-            }
-            reqLogger.Info("Creating a new Job", "Job.Namespace", job.Namespace, "Job.Name", job.Name)
-            err = r.client.Create(context.TODO(), job)
+        // send the job and add an entry in the db
+        // (after adding to active so many jobs dont get rescheduled)
+        err := r.submitCondorJob(instance)
+        if err != nil {
+            reqLogger.Error(err, "Failed to send a job to HTCondor")
+            return reconcile.Result{}, err
+        }
+        // Requeue to wait for the job to complete
+        return reconcile.Result{RequeueAfter: time.Second * 10}, nil
+    } else {
+        // a job is active => check if it's marked as running in the database
+        jobStatus, err := getJobStatus(instance.Name)
+        if err != nil {
+            reqLogger.Error(err, "Failed to get the status of an htcjob")
+            return reconcile.Result{}, err
+        }
+        // if job is done
+        if jobStatus == 4 {
+            instance.Status.Active = 0
+            instance.Status.Succeeded = 1
+            err = r.client.Status().Update(context.TODO(), instance)
             if err != nil {
-                return reconcile.Result{}, err
-            }
-            // add to number of active
-            instance.Status.Active += 1
-            err := r.client.Status().Update(context.TODO(), instance)
-            if err != nil {
-                fmt.Println("FAIL")
                 reqLogger.Error(err, "Failed to update HTCJob status")
                 return reconcile.Result{}, err
             }
-            // Pod created successfully - don't requeue
             return reconcile.Result{}, nil
-        } else if err != nil {
-            return reconcile.Result{RequeueAfter: time.Second * 10}, nil
         }
-        return reconcile.Result{}, nil
-    }
-    // Create the job
-    job := r.condorSubmitJob(instance)
-    // Set HTCJob instance as the owner and controller
-    if err := controllerutil.SetControllerReference(instance, job, r.scheme); err != nil {
-        return reconcile.Result{}, err
     }
 
-    // Check if the Job already exists
-    found := &batchv1.Job{}
-    err = r.client.Get(context.TODO(), types.NamespacedName{Name: job.Name, Namespace: job.Namespace}, found)
-    if err != nil && errors.IsNotFound(err) {
-        reqLogger.Info("Creating a new Job", "Job.Namespace", job.Namespace, "Job.Name", job.Name)
-        err = r.client.Create(context.TODO(), job)
-        if err != nil {
-            return reconcile.Result{}, err
-        }
-        // add to number of active
-        instance.Status.Active += 1
-        err := r.client.Status().Update(context.TODO(), instance)
-        if err != nil {
-            fmt.Println("FAIL")
-            reqLogger.Error(err, "Failed to update HTCJob status")
-            return reconcile.Result{}, err
-        }
-        // Pod created successfully - don't requeue
-        return reconcile.Result{RequeueAfter: time.Second * 10}, nil
-    } else if err != nil {
-        return reconcile.Result{RequeueAfter: time.Second * 10}, nil
-    }
-
-    // Pod already exists - don't requeue
-    reqLogger.Info("Skip reconcile: Job already exists", "Job.Namespace", found.Namespace, "Job.Name", found.Name)
     return reconcile.Result{RequeueAfter: time.Second * 10}, nil
 }
-
-/////// newPodForCR returns a busybox pod with the same name/namespace as the cr
-/////func newPodForCR(cr *htcv1alpha1.HTCJob) *corev1.Pod {
-/////    labels := map[string]string{
-/////        "app": cr.Name,
-/////    }
-/////    return &corev1.Pod{
-/////        ObjectMeta: metav1.ObjectMeta{
-/////            Name:      cr.Name + "-pod",
-/////            Namespace: cr.Namespace,
-/////            Labels:    labels,
-/////        },
-/////        Spec: corev1.PodSpec{
-/////            Containers: []corev1.Container{
-/////                {
-/////                    Name:    "busybox",
-/////                    Image:   "busybox",
-/////                    Command: []string{"sleep", "3600"},
-/////                },
-/////            },
-/////        },
-/////    }
-/////}

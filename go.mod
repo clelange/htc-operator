@@ -7,12 +7,16 @@ require (
 	github.com/cloudevents/sdk-go v1.1.2
 	github.com/cloudevents/sdk-go/v2 v2.0.0-preview6 // indirect
 	github.com/jdob/visitors-operator v0.0.0-20191024200828-5b18c79fe98b
+	github.com/lib/pq v1.3.0
 	github.com/operator-framework/operator-sdk v0.15.2
 	github.com/spf13/pflag v1.0.5
+	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
+	golang.org/x/tools v0.0.0-20200325010219-a49f79bcc224 // indirect
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v12.0.0+incompatible
 	sigs.k8s.io/controller-runtime v0.4.0
+	upper.io/db.v3 v3.6.4+incompatible // indirect
 )
 
 // Pinned to kubernetes-1.16.2

@@ -9,14 +9,16 @@ import (
 )
 
 func main() {
-    ctx := cloudevents.ContextWithTarget(context.Background(), "http://cms-batch-test.cern.ch")
+    ctx := cloudevents.ContextWithTarget(context.Background(),
+        "http://cms-batch-test.cern.ch")
 
     p, err := cloudevents.NewHTTP()
     if err != nil {
         log.Fatalf("failed to create protocol: %s", err.Error())
     }
 
-    c, err := cloudevents.NewClient(p, cloudevents.WithTimeNow(), cloudevents.WithUUIDs())
+    c, err := cloudevents.NewClient(p, cloudevents.WithTimeNow(),
+        cloudevents.WithUUIDs())
     if err != nil {
         log.Fatalf("failed to create client, %v", err)
     }
@@ -25,10 +27,8 @@ func main() {
     fmt.Println(jobName)
 
     e := cloudevents.NewEvent()
-    //e.SetType("com.cloudevents.sample.sent")
-    //e.SetSource("https://github.com/cloudevents/sdk-go/v2/cmd/samples/httpb/sender")
-    e.SetType("chgdh")
-    e.SetSource("gfdsgsf")
+    e.SetType("htcjob.cloudevent")
+    e.SetSource("cern.ch")
     _ = e.SetData(cloudevents.ApplicationJSON, map[string]interface{}{
         "name": jobName,
     })
