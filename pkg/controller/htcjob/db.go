@@ -19,14 +19,14 @@ const (
     dbname       = "postgres"
 )
 
-func recordSubmission(htcjobName string, tempDirName string) error {
+func recordSubmission(htcjobName string, tempDirName string) (string, error) {
     // get job id
     var clusterId, procId string
 
     buf, err := os.Open(path.Join(tempDirName, "condor_output.txt"))
     if err != nil {
         fmt.Println("File reading error")
-        return err
+        return "", err
     }
     defer buf.Close()
 
@@ -45,7 +45,7 @@ func recordSubmission(htcjobName string, tempDirName string) error {
     err = snl.Err()
     if err != nil {
         fmt.Println("File reading error")
-        return err
+        return "", err
     }
     jobId := fmt.Sprintf("%s.%s", clusterId, procId)
     // inset record into the DB
@@ -55,19 +55,19 @@ func recordSubmission(htcjobName string, tempDirName string) error {
     db, err := sql.Open("postgres", psqlInfo)
     if err != nil {
         fmt.Printf("Error while inserting the job into DB")
-        return err
+        return "", err
     }
     defer db.Close()
     sqlStatement := `INSERT INTO htcjobs VALUES ($1, $2, $3, $4)`
     _, err = db.Exec(sqlStatement, htcjobName, jobId, 1, tempDirName)
     if err != nil {
         fmt.Printf("Error while inserting the job into DB")
-        return err
+        return "", err
     }
-    return nil
+    return jobId, nil
 }
 
-func getJobStatus(htcjobName string) (byte, error) {
+func getJobStatus(htcjobName string, jobId string) (byte, error) {
     var status byte
     psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
         "password=%s dbname=%s sslmode=disable",
@@ -77,8 +77,9 @@ func getJobStatus(htcjobName string) (byte, error) {
         return 0, err
     }
     defer db.Close()
-    sqlStatement := `SELECT status FROM htcjobs WHERE htcjobName=$1`
-    row := db.QueryRow(sqlStatement, htcjobName)
+    sqlStatement := `
+    SELECT status FROM htcjobs WHERE htcjobName=$1 AND jobId=$2`
+    row := db.QueryRow(sqlStatement, htcjobName, jobId)
     err = row.Scan(&status)
     if err != nil {
         return 0, err

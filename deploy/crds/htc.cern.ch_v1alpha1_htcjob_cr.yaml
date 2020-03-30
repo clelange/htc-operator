@@ -3,12 +3,15 @@ kind: HTCJob
 metadata:
   name: example-htcjob
 spec:
-  container: centos
-  script: |
-    #!/bin/bash
-    echo "AAA"
-    echo "BBB"
-    echo CCC
-    echo "JOB_NAME"
-    echo $JOB_NAME
-    echo "JOB_NAME"
+  name: xmpl-img
+  script:
+    image: centos
+    command: ["bash"]
+    source: |
+      echo 'AAA'
+      echo 'BBB'
+      echo CCC
+      echo 'JOB_NAME'
+      echo $JOB_NAME
+      echo $TEMP_DIR
+      echo 'JOB_NAME'

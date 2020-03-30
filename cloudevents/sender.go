@@ -24,6 +24,7 @@ func main() {
     }
     // get job name
     jobName := os.Getenv("JOB_NAME")
+    tempDirName := os.Getenv("TEMP_DIR")
     fmt.Println(jobName)
 
     e := cloudevents.NewEvent()
@@ -31,6 +32,7 @@ func main() {
     e.SetSource("cern.ch")
     _ = e.SetData(cloudevents.ApplicationJSON, map[string]interface{}{
         "name": jobName,
+        "tempdir": tempDirName,
     })
 
     err = c.Send(ctx, e)

@@ -13,13 +13,14 @@ import (
     //batchv1 "k8s.io/api/batch/v1"
 )
 
-func (r *ReconcileHTCJob) submitCondorJob(v *htcv1alpha1.HTCJob) error {
+func (r *ReconcileHTCJob) submitCondorJob(v *htcv1alpha1.HTCJob) (string, error) {
+    tdName, err := ioutil.TempDir(os.TempDir(), "scratch-")
     jobShellScript := "#!/bin/bash\n" +
         "ls -la\n" +
         "singularity exec --contain --ipc --pid " +
         "       --home $PWD:/srv " +
         "       --bind /cvmfs " +
-        fmt.Sprintf("docker://%s ", v.Spec.Container) +
+        fmt.Sprintf("docker://%s ", v.Spec.Script.Image) +
         fmt.Sprintf("./script_%s.sh\n", v.Name) +
         "./sender\n"
     jobSubFile := "universe                = vanilla\n" +
@@ -30,27 +31,26 @@ func (r *ReconcileHTCJob) submitCondorJob(v *htcv1alpha1.HTCJob) error {
         "error                   = err.$(ClusterId).$(ProcId)\n" +
         "log                     = log.$(ClusterId).$(ProcId)\n" +
         "transfer_input_files    = script.sh, sender\n" +
-        "environment             = \"JOB_NAME=" + v.Name + "\"\n" +
+        fmt.Sprintf("environment = \"JOB_NAME=%s TEMP_DIR=%s\"\n", v.Name, tdName) +
         "queue 1"
     // submit the job to HTC
-    tdName, err := ioutil.TempDir(os.TempDir(), "scratch-")
     // write files
     if err != nil {
         fmt.Println("Failed tempdir creation")
-        return err
+        return "", err
     }
-    err = sendJob(v.Spec.Script, jobShellScript, jobSubFile, tdName)
+    err = sendJob(v.Spec.Script.Source, jobShellScript, jobSubFile, tdName)
     if err != nil {
         fmt.Println("Failed job submission (function sendJob)")
-        return err
+        return "", err
     }
     // record the submission in a database
-    err = recordSubmission(v.Name, tdName)
+    jobId, err := recordSubmission(v.Name, tdName)
     if err != nil {
         fmt.Print("Failed to record the fact of submission in the DB")
-        return err
+        return "", err
     }
-    return nil
+    return jobId, nil
 }
 
 func sendJob(script string, jobShellScript string, jobSubFile string,

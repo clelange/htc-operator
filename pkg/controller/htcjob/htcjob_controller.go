@@ -107,21 +107,28 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
         instance.Status.Active = 1
         err = r.client.Status().Update(context.TODO(), instance)
         if err != nil {
-            reqLogger.Error(err, "Failed to update HTCJob status")
+            reqLogger.Error(err, "Failed to update HTCJob status (Active)")
             return reconcile.Result{}, err
         }
         // send the job and add an entry in the db
         // (after adding to active so many jobs dont get rescheduled)
-        err := r.submitCondorJob(instance)
+        jobId, err := r.submitCondorJob(instance)
         if err != nil {
             reqLogger.Error(err, "Failed to send a job to HTCondor")
+            return reconcile.Result{}, err
+        }
+        // record the jobId in Status
+        instance.Status.JobId = jobId
+        err = r.client.Status().Update(context.TODO(), instance)
+        if err != nil {
+            reqLogger.Error(err, "Failed to update HTCJob status (JobId)")
             return reconcile.Result{}, err
         }
         // Requeue to wait for the job to complete
         return reconcile.Result{RequeueAfter: time.Second * 10}, nil
     } else {
         // a job is active => check if it's marked as running in the database
-        jobStatus, err := getJobStatus(instance.Name)
+        jobStatus, err := getJobStatus(instance.Name, instance.Status.JobId)
         if err != nil {
             reqLogger.Error(err, "Failed to get the status of an htcjob")
             return reconcile.Result{}, err

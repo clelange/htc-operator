@@ -2,16 +2,39 @@ package v1alpha1
 
 import (
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-    batchv1 "k8s.io/api/batch/v1"
+    //batchv1 "k8s.io/api/batch/v1"
+    //corev1 "k8s.io/api/core/v1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+type ScriptSpec struct {
+    Image string `json:"image"`
+    Command []string `json:"command"`
+    Source string `json:"source"`
+}
+
 // HTCJobSpec defines the desired state of HTCJob
 type HTCJobSpec struct {
-    Container string `json:"container"`
-    Script string `json:"script"`
+    Name string `json:"name"`
+    Script ScriptSpec `json:"script"`
+}
+
+type HTCJobStatus struct {
+    // from https://github.com/kubernetes/api/blob/master/batch/v1/types.go
+    // The number of actively running pods.
+    // +optional
+    Active int32 `json:"active,omitempty" protobuf:"varint,4,opt,name=active"`
+
+    // The number of pods which reached phase Succeeded.
+    // +optional
+    Succeeded int32 `json:"succeeded,omitempty" protobuf:"varint,5,opt,name=succeeded"`
+
+    // The number of pods which reached phase Failed.
+    // +optional
+    Failed int32 `json:"failed,omitempty" protobuf:"varint,6,opt,name=failed"`
+    JobId string `json:"jobid,omitempty"`
 }
 
 // HTCJobStatus defines the observed state of HTCJob
@@ -31,7 +54,7 @@ type HTCJob struct {
 ////    Spec   HTCJobSpec   `json:"spec,omitempty"`
 ////    Status HTCJobStatus `json:"status,omitempty"`
     Spec HTCJobSpec `json:"spec,omitempty"`
-    Status batchv1.JobStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+    Status HTCJobStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
