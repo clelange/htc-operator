@@ -1,49 +1,10 @@
-FROM gitlab-registry.cern.ch/linuxsupport/cc7-base:latest
-ADD condorsubmit/repos/batch7-stable.repo /etc/yum.repos.d/
-ADD condorsubmit/repos/htcondor-stable.repo /etc/yum.repos.d/
-ADD condorsubmit/etc/krb5.conf /etc/krb5.conf
-ADD condorsubmit/etc/ngbauth-submit /etc/sysconfig/
-ADD condorsubmit/etc/ngauth_batch_crypt_pub.pem /etc/
-ADD condorsubmit/etc/cerngridca.crt /etc/pki/ca-trust/source/anchors/cerngridca.crt
-ADD condorsubmit/etc/cernroot.crt /etc/pki/ca-trust/source/anchors/cernroot.crt
-RUN update-ca-trust
+FROM gitlab-registry.cern.ch/clange/condorsubmit:latest
 
-RUN yum -y update && \
-    yum clean all && \
-    yum -y groupinstall 'Development Tools' && \
-    yum -y install \
-        ca-certificates \
-        man-db \
-        man-pages \
-        environment-modules \
-        python-pip \
-        python-setuptools \
-        vim \
-        wget \
-        yum-plugin-priorities \
-        which \
-        condor condor-procd condor-std-universe \
-        condor-external-libs condor-classads \
-        boost-devel \
-        sudo \
-        krb5-workstation \
-        cernbatchsubmit \
-        ngbauth-submit && \
-    yum clean -y all
+ARG USER_NAME=tbareiki
+ENV OPERATOR=/usr/local/bin/htc-operator
+ENV USER_UID=1001
 
-RUN python -m pip --no-cache-dir install htcondor s3cmd
-
-ADD condorsubmit/etc/cernsubmit.yaml /etc/condor/
-ADD condorsubmit/etc/10_cernsubmit.config /etc/condor/config.d/
-ADD condorsubmit/etc/cernbatchsubmit_patch /usr/bin/
-
-RUN mkdir -p /etc/modulefiles/lxbatch
-ADD condorsubmit/etc/share /etc/modulefiles/lxbatch/
-ADD condorsubmit/etc/tzero /etc/modulefiles/lxbatch/
-
-ENV OPERATOR=/usr/local/bin/htc-operator \
-    USER_UID=1001 \
-    USER_NAME=tbareiki
+RUN python -m pip --no-cache-dir install s3cmd
 
 # install operator binary
 COPY build/_output/bin/htc-operator ${OPERATOR}
