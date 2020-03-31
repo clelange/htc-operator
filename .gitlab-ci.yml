@@ -1,6 +1,7 @@
 stages:
   - compile
   - deploy
+  - build
 
 build_go_binary:
   stage: compile
@@ -21,5 +22,5 @@ deploy_to_s3:
       name: jess/s3cmd
       entrypoint: [""]
   script:
-    s3cmd --access_key ${S3_ACCESS_KEY} --secret_key ${S3_SECRET_KEY} --host s3.cern.ch --host-bucket "%(bucket)s.s3.cern.ch" put build/bin/receiver s3://TADO_BUCKET/receiver
-    s3cmd --access_key ${S3_ACCESS_KEY} --secret_key ${S3_SECRET_KEY} --host s3.cern.ch --host-bucket "%(bucket)s.s3.cern.ch" put build/bin/sender s3://TADO_BUCKET/sender
+    - s3cmd --access_key ${S3_ACCESS_KEY} --secret_key ${S3_SECRET_KEY} --host s3.cern.ch --host-bucket "%(bucket)s.s3.cern.ch" put build/bin/receiver s3://TADO_BUCKET/receiver
+    - s3cmd --access_key ${S3_ACCESS_KEY} --secret_key ${S3_SECRET_KEY} --host s3.cern.ch --host-bucket "%(bucket)s.s3.cern.ch" put build/bin/sender s3://TADO_BUCKET/sender
