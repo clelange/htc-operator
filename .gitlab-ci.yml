@@ -63,7 +63,7 @@ build_operator:
     - /kaniko/executor --context "$CONTEXT" \
       --dockerfile "$CONTEXT/$DOCKERFILE_PATH" \
       --destination "$CI_REGISTRY_IMAGE:$TAG" \
-      --build-arg "CI_PROJECT_NAMESPACE=${CI_PROJECT_NAMESPACE}" \
-      --build-arg "CI_PROJECT_NAME=${CI_PROJECT_NAME}"
+      --build-arg CI_PROJECT_NAMESPACE "${CI_PROJECT_NAMESPACE}" \
+      --build-arg CI_PROJECT_NAME "${CI_PROJECT_NAME}"
   variables:
     DOCKERFILE_PATH: build/Dockerfile
