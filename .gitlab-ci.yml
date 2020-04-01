@@ -8,6 +8,9 @@ stages:
 
 build_go_binary:
   stage: compile
+  only:
+    changes:
+      - cloudevents/*
   image: golang:1.13-buster
   script:
     - export GO111MODULE=on
@@ -21,6 +24,9 @@ build_go_binary:
 
 deploy_to_s3:
   stage: deploy
+  only:
+    changes:
+      - cloudevents/*
   image:
       name: jess/s3cmd
       entrypoint: [""]
@@ -56,4 +62,4 @@ build_operator:
     # See https://docs.gitlab.com/ee/ci/variables/predefined_variables.html#variables-reference for available variables
     - /kaniko/executor --context "$CONTEXT" --dockerfile "$CONTEXT/$DOCKERFILE_PATH" --destination "$CI_REGISTRY_IMAGE:$TAG"
   variables:
-    DOCKERFILE_PATH: ${CI_PROJECT_DIR}/bin/Dockerfile
+    DOCKERFILE_PATH: bin/Dockerfile
