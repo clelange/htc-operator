@@ -2,7 +2,7 @@ package htcjob
 
 import (
 	"context"
-	htcv1alpha1 "gitlab.cern.ch/clange/htc-operator/pkg/apis/htc/v1alpha1"
+	htcv1alpha1 "gitlab.cern.ch/cms-cloud/htc-operator/pkg/apis/htc/v1alpha1"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
