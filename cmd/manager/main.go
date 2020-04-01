@@ -9,11 +9,11 @@ import (
 	"runtime"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
 
 	"../../pkg/apis"
-	../../pkg/controller"
+	"../../pkg/controller"
 	"../../version"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"

@@ -11,7 +11,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
       -o /htc-operator \
       -gcflags all=-trimpath=${GOPATH}/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE} \
       -asmflags all=-trimpath=${GOPATH}/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE} -mod=vendor \
-      gitlab.cern.ch/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}/cmd/manager
+      cmd/manager
 
 FROM gitlab-registry.cern.ch/clange/condorsubmit:latest
 
