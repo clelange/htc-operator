@@ -1,3 +1,16 @@
+FROM golang:1.13-buster AS builder
+ENV GO111MODULE=on
+
+# Copy the code from the host and compile it
+WORKDIR $GOPATH/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}
+COPY . ./
+RUN go mod vendor
+RUN CGO_ENABLED=0 GOOS=linux go build \
+      -o /htc-operator \
+      -gcflags all=-trimpath=/root/go/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE} \
+      -asmflags all=-trimpath=/root/go/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE} -mod=vendor \
+      gitlab.cern.ch/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}/cmd/manager
+
 FROM gitlab-registry.cern.ch/clange/condorsubmit:latest
 
 ARG USER_NAME=tbareiki
@@ -7,7 +20,7 @@ ENV USER_UID=1001
 RUN python -m pip --no-cache-dir install s3cmd
 
 # install operator binary
-COPY build/_output/bin/htc-operator ${OPERATOR}
+COPY /htc-operator ${OPERATOR}
 
 COPY build/bin /usr/local/bin
 RUN  /usr/local/bin/user_setup
