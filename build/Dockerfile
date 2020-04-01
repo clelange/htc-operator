@@ -7,6 +7,7 @@ ARG CI_PROJECT_NAME
 WORKDIR $GOPATH/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}
 COPY . ./
 RUN go mod vendor
+RUN echo ${CI_PROJECT_NAMESPACE} ${CI_PROJECT_NAME}
 RUN CGO_ENABLED=0 GOOS=linux go build \
       -o /htc-operator \
       -gcflags all=-trimpath=/root/go/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE} \
