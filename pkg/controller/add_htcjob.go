@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"htc-operator/pkg/controller/htcjob"
+	"gitlab.cern.ch/clange/htc-operator/pkg/controller/htcjob"
 )
 
 func init() {

@@ -1,7 +1,7 @@
 package apis
 
 import (
-	"htc-operator/pkg/apis/htc/v1alpha1"
+	"gitlab.cern.ch/clange/htc-operator/pkg/apis/htc/v1alpha1"
 )
 
 func init() {
