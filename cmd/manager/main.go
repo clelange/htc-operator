@@ -12,9 +12,9 @@ import (
 
 	"k8s.io/client-go/rest"
 
-	"gitlab.cern.ch/clange/htc-operator/pkg/apis"
-	"gitlab.cern.ch/clangehtc-operator/pkg/controller"
-	"gitlab.cern.ch/clangehtc-operator/version"
+	"../../pkg/apis"
+	../../pkg/controller"
+	"../../version"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
