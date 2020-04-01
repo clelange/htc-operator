@@ -1,4 +1,4 @@
-module htc-operator
+module gitlab.cern.ch/clange/htc-operator
 
 go 1.13
 
