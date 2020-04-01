@@ -1,7 +1,7 @@
 FROM golang:1.13-buster AS builder
 ENV GO111MODULE=on
-ARG CI_PROJECT_NAMESPACE
-ARG CI_PROJECT_NAME
+ARG CI_PROJECT_NAMESPACE=blaspace
+ARG CI_PROJECT_NAME=blaname
 
 # Copy the code from the host and compile it
 WORKDIR $GOPATH/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}
