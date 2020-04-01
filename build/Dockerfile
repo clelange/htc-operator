@@ -1,17 +1,17 @@
 FROM golang:1.13-buster AS builder
 ENV GO111MODULE=on
-ARG CI_PROJECT_NAMESPACE=blaspace
-ARG CI_PROJECT_NAME=blaname
+ARG CI_PROJECT_NAMESPACE
+ARG CI_PROJECT_NAME
 
 # Copy the code from the host and compile it
-WORKDIR $GOPATH/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}
+WORKDIR ${GOPATH}/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}
 COPY . ./
 RUN go mod vendor
-RUN echo ${CI_PROJECT_NAMESPACE} ${CI_PROJECT_NAME}
+RUN ls ${GOPATH}/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}/cmd/manager
 RUN CGO_ENABLED=0 GOOS=linux go build \
       -o /htc-operator \
-      -gcflags all=-trimpath=/root/go/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE} \
-      -asmflags all=-trimpath=/root/go/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE} -mod=vendor \
+      -gcflags all=-trimpath=${GOPATH}/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE} \
+      -asmflags all=-trimpath=${GOPATH}/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE} -mod=vendor \
       gitlab.cern.ch/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}/cmd/manager
 
 FROM gitlab-registry.cern.ch/clange/condorsubmit:latest
