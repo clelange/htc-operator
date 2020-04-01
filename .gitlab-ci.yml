@@ -49,8 +49,6 @@ build_operator:
     - export TAG=${TAG:-"RELEASE".$DATE}
     - export CONTEXT=${CONTEXT:-$CI_PROJECT_DIR}
     - export DOCKERFILE_PATH=${DOCKERFILE_PATH:-Dockerfile}
-    - echo ${DOCKERFILE_PATH}
-    - ls $CONTEXT
     - |
       export DOCKERFILE=$CONTEXT/$DOCKERFILE_PATH
       if ! [ -f "$DOCKERFILE" ]; then
@@ -64,4 +62,4 @@ build_operator:
     # See https://docs.gitlab.com/ee/ci/variables/predefined_variables.html#variables-reference for available variables
     - /kaniko/executor --context "$CONTEXT" --dockerfile "$CONTEXT/$DOCKERFILE_PATH" --destination "$CI_REGISTRY_IMAGE:$TAG"
   variables:
-    DOCKERFILE_PATH: bin/Dockerfile
+    DOCKERFILE_PATH: build/Dockerfile
