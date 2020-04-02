@@ -27,6 +27,9 @@ deploy_to_s3:
   only:
     changes:
       - cloudevents/*
+    refs:
+      - master
+      - schedules
   image:
       name: jess/s3cmd
       entrypoint: [""]
