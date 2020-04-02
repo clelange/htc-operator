@@ -13,6 +13,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
       -asmflags all=-trimpath=${GOPATH}/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE} -mod=vendor \
       gitlab.cern.ch/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}/cmd/manager
 
+
 FROM gitlab-registry.cern.ch/clange/condorsubmit:latest
 
 ARG USER_NAME=tbareiki
@@ -22,7 +23,7 @@ ENV USER_UID=1001
 RUN python -m pip --no-cache-dir install s3cmd
 
 # install operator binary
-COPY /htc-operator ${OPERATOR}
+COPY --from=builder /htc-operator ${OPERATOR}
 
 COPY build/bin /usr/local/bin
 RUN  /usr/local/bin/user_setup
