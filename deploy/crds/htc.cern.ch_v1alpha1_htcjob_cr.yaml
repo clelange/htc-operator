@@ -4,6 +4,7 @@ metadata:
   name: example-htcjob
 spec:
   name: xmpl-img
+  queue: 3
   script:
     image: centos
     command: ["bash"]

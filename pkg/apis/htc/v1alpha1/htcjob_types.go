@@ -18,23 +18,16 @@ type ScriptSpec struct {
 // HTCJobSpec defines the desired state of HTCJob
 type HTCJobSpec struct {
     Name string `json:"name"`
+    // +optional
+    Queue int `json:"queue"`
     Script ScriptSpec `json:"script"`
 }
 
 type HTCJobStatus struct {
-    // from https://github.com/kubernetes/api/blob/master/batch/v1/types.go
-    // The number of actively running pods.
-    // +optional
-    Active int32 `json:"active,omitempty" protobuf:"varint,4,opt,name=active"`
-
-    // The number of pods which reached phase Succeeded.
-    // +optional
-    Succeeded int32 `json:"succeeded,omitempty" protobuf:"varint,5,opt,name=succeeded"`
-
-    // The number of pods which reached phase Failed.
-    // +optional
-    Failed int32 `json:"failed,omitempty" protobuf:"varint,6,opt,name=failed"`
-    JobId string `json:"jobid,omitempty"`
+    Active int `json:"active"`
+    Succeeded int `json:"succeeded"`
+    Failed int `json:"failed"`
+    JobId []string `json:"jobid"`
 }
 
 // HTCJobStatus defines the observed state of HTCJob

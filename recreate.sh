@@ -1,13 +1,9 @@
 #operator-sdk generate k8s
-# build the cloudevents receiver
-sed "s/<YOUR_USER_NAME>/$USER/g" build/Dockerfile.template > build/Dockerfile
 go build -o build/bin/receiver cloudevents/receiver.go
-s3cmd put build/bin/receiver s3://TADO_BUCKET/receiver
-# build the cloudevents sender
 go build -o build/bin/sender cloudevents/sender.go
-s3cmd put build/bin/sender s3://TADO_BUCKET/sender
-operator-sdk build xkxgygmoqkguuddnkz/htc-operator || exit
-docker push xkxgygmoqkguuddnkz/htc-operator
+#operator-sdk build xkxgygmoqkguuddnkz/htc-operator --image-build-args "--build-arg CI_PROJECT_NAMESPACE=cms-cloud --build-arg CI_PROJECT_NAME=htc-operator" || exit
+operator-sdk build xkxgygmoqkguuddnkz/htc-operator|| exit
+docker push xkxgygmoqkguuddnkz/htc-operator || exit
 
 kubectl create configmap s3cfg --from-file=$HOME/.s3cfg
 

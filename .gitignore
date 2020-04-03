@@ -81,3 +81,6 @@ build/bin
 build/_output
 build/Dockerfile.bak*
 internal/
+Dockerfile.ci
+Dockerfile.normal
+deploy/crds/htc.cern.ch_v1alpha1_htcjob_cr_*

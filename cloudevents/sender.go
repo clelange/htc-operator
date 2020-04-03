@@ -5,10 +5,14 @@ import (
     "log"
     "fmt"
     "os"
+    "bufio"
+    "regexp"
     cloudevents "github.com/cloudevents/sdk-go/v2"
 )
 
 func main() {
+
+    fmt.Println("START")
     ctx := cloudevents.ContextWithTarget(context.Background(),
         "http://cms-batch-test.cern.ch")
 
@@ -24,15 +28,17 @@ func main() {
     }
     // get job name
     jobName := os.Getenv("JOB_NAME")
-    tempDirName := os.Getenv("TEMP_DIR")
-    fmt.Println(jobName)
+    jobId := getJobId()
+    fmt.Println("AAA")
+    fmt.Println(jobId)
+    fmt.Println("BBB")
 
     e := cloudevents.NewEvent()
     e.SetType("htcjob.cloudevent")
     e.SetSource("cern.ch")
     _ = e.SetData(cloudevents.ApplicationJSON, map[string]interface{}{
         "name": jobName,
-        "tempdir": tempDirName,
+        "jobid": jobId,
     })
 
     err = c.Send(ctx, e)
@@ -41,3 +47,32 @@ func main() {
     }
 }
 
+func getJobId() string {
+    var clusterId, procId string
+
+    buf, err := os.Open(".job.ad")
+    if err != nil {
+        fmt.Println("File reading error")
+        return "ERROR"
+    }
+    defer buf.Close()
+
+    snl := bufio.NewScanner(buf)
+    reCluster := regexp.MustCompile(`^ClusterId = (.*)$`)
+    reProc := regexp.MustCompile(`^ProcId = (.*)$`)
+    for snl.Scan() {
+        currText := snl.Text()
+        if reCluster.MatchString(currText) {
+            clusterId = reCluster.ReplaceAllString(currText, `$1`)
+        }
+        if reProc.MatchString(currText) {
+            procId = reProc.ReplaceAllString(currText, `$1`)
+        }
+    }
+    err = snl.Err()
+    if err != nil {
+        fmt.Println("File reading error")
+        return "ERROR"
+    }
+    return fmt.Sprintf("%s.%s", clusterId, procId)
+}
