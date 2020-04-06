@@ -20,10 +20,9 @@ func (r *ReconcileHTCJob) submitCondorJob(v *htcv1alpha1.HTCJob) ([]string, erro
         queue_no = v.Spec.Queue
     }
     jobShellScript := "#!/bin/bash\n" +
-        "ls -la\n" +
-        "singularity exec --contain --ipc --pid " +
-        "       --home $PWD:/srv " +
+        "singularity exec " +
         "       --bind /cvmfs " +
+        "       --bind /afs/cern.ch " +
         fmt.Sprintf("docker://%s ", v.Spec.Script.Image) +
         "./script.sh\n" +
         "./sender\n"

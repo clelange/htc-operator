@@ -1,0 +1,75 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: k8s-jobs-
+spec:
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: htcjob-argo-example-
+spec:
+  entrypoint: wf
+  volumes:
+  - name: config-volume
+    configMap:
+      name: s3cfg
+  templates:
+  - name: wf
+    steps:
+    - - name: A
+        template: write
+        arguments:
+          parameters:
+          - name: kwd
+            value: "A"
+    - - name: B
+        template: write
+        arguments:
+          parameters:
+          - name: kwd
+            value: "B"
+    - - name: C
+        template: combine 
+        arguments:
+          parameters:
+          - name: fileA
+            value: "A.txt"
+          - name: fileB
+            value: "B.txt"
+  - name: write
+    inputs:
+      parameters:
+      - name: kwd
+    container:
+      image: s3cmd/s3cmd
+      command: ["sh", "-c"]
+      args: ["echo 'REGULAR {{inputs.parameters.kwd}}' > file.txt &&
+        s3cmd -c /etc/config/.s3cfg put file.txt s3://TADO_BUCKET/{{inputs.parameters.kwd}}.txt"]
+      volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+  - name: combine
+    inputs:
+      parameters:
+      - name: fileA
+      - name: fileB
+    resource:
+      action: create            # can be any kubectl action (e.g. create, delete, apply, patch)
+      successCondition: status.succeeded > 0
+      failureCondition: status.failed > 0
+      manifest: |
+        apiVersion: htc.cern.ch/v1alpha1
+        kind: HTCJob
+        metadata:
+          name: example-htcjob
+        spec:
+          name: xmpl-img
+          script:
+            image: s3cmd/s3cmd
+            command: ["bash"]
+            source: |
+              Afile={{inputs.parameters.fileA}}
+              Bfile={{inputs.parameters.fileB}}
+              s3cmd get s3://TADO_BUCKET/$Afile
+              s3cmd get s3://TADO_BUCKET/$Bfile
+              cat $Afile $Bfile > /afs/cern.ch/work/t/tbareiki/Combined.txt
