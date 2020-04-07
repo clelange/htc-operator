@@ -8,15 +8,7 @@ import (
     "database/sql"
     "encoding/json"
 
-    _ "github.com/lib/pq"
-)
-
-const (
-    host         = "cms-batch-test.cern.ch"
-    port         = 30303
-    user         = "postgres"
-    password     = "pgpasswd"
-    dbname       = "postgres"
+    _ "github.com/mattn/go-sqlite3"
 )
 
 type Response struct {
@@ -51,22 +43,20 @@ func receive(ctx context.Context, event cloudevents.Event) {
 }
 
 func markJobDone(htcjobName string, jobId string) error {
-    psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-        "password=%s dbname=%s sslmode=disable",
-        host, port, user, password, dbname)
-    db, err := sql.Open("postgres", psqlInfo)
+    db, err := sql.Open("sqlite3", "/data/sqlite/htcjobs.db")
     if err != nil {
-        fmt.Printf("Error while inserting the job into DB")
+        fmt.Printf("Error while creating DB connection (receiver)")
         return err
     }
     defer db.Close()
-    sqlStatement := `UPDATE htcjobs SET status=4 WHERE htcjobName=$1 AND jobid=$2`
-    fmt.Println(sqlStatement)
-    fmt.Println(htcjobName)
-    fmt.Println(jobId)
-    _, err = db.Exec(sqlStatement, htcjobName, jobId)
+    stmt, err := db.Prepare(`UPDATE htcjobs SET status=4 WHERE htcjobName=$1 AND jobid=$2`)
     if err != nil {
-        fmt.Printf("Error while inserting the job into DB")
+        fmt.Println("Error while creating DB statement (receiver)")
+        return err
+    }
+    _, err = stmt.Exec(htcjobName, jobId)
+    if err != nil{
+        fmt.Println("Error while executing DB statement (receiver)")
         return err
     }
     return nil

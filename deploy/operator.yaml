@@ -23,6 +23,8 @@ spec:
           volumeMounts:
           - mountPath: /mnt/kinit
             name: kinit-secret-vol
+          - mountPath: /data
+            name: vol-cephfs-cms
           env:
             - name: WATCH_NAMESPACE
               valueFrom:
@@ -35,6 +37,10 @@ spec:
             - name: OPERATOR_NAME
               value: "htc-operator"
       volumes:
+      - name: vol-cephfs-cms
+        persistentVolumeClaim:
+          claimName: pvc-cephfs-cms
+          readOnly: false
       - name: kinit-secret-vol
         secret:
           secretName: kinit-secret

@@ -8,15 +8,7 @@ import (
     "regexp"
     "path"
 
-    _ "github.com/lib/pq"
-)
-
-const (
-    host         = "cms-batch-test.cern.ch"
-    port         = 30303
-    user         = "postgres"
-    password     = "pgpasswd"
-    dbname       = "postgres"
+    _ "github.com/mattn/go-sqlite3"
 )
 
 func recordSubmission(htcjobName string, tempDirName string) ([]string, error) {
@@ -52,19 +44,20 @@ func recordSubmission(htcjobName string, tempDirName string) ([]string, error) {
         currentJobId := fmt.Sprintf("%s.%s", clusterId[i], procId[i])
         jobId = append(jobId, currentJobId)
         // inset record into the DB
-        psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-            "password=%s dbname=%s sslmode=disable",
-            host, port, user, password, dbname)
-        db, err := sql.Open("postgres", psqlInfo)
+        db, err := sql.Open("sqlite3", "/data/sqlite/htcjobs.db")
         if err != nil {
             fmt.Printf("Error while inserting the job into DB")
             return nil, err
         }
         defer db.Close()
-        sqlStatement := `INSERT INTO htcjobs VALUES ($1, $2, $3, $4)`
-        _, err = db.Exec(sqlStatement, htcjobName, currentJobId, 1, tempDirName)
+        stmt, err := db.Prepare(`INSERT INTO htcjobs VALUES (?, ?, ?, ?)`)
         if err != nil {
-            fmt.Printf("Error while inserting the job into DB")
+            fmt.Printf("Error while preparing a DB statement")
+            return nil, err
+        }
+        _, err = stmt.Exec(htcjobName, currentJobId, 1, tempDirName)
+        if err != nil {
+            fmt.Printf("Error while inserting with a DB statement")
             return nil, err
         }
     }
@@ -73,20 +66,22 @@ func recordSubmission(htcjobName string, tempDirName string) ([]string, error) {
 
 func getJobStatus(htcjobName string, jobId string) (int, error) {
     var status int
-    psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-        "password=%s dbname=%s sslmode=disable",
-        host, port, user, password, dbname)
-    db, err := sql.Open("postgres", psqlInfo)
+    db, err := sql.Open("sqlite3", "/data/sqlite/htcjobs.db")
     if err != nil {
         return 0, err
     }
     defer db.Close()
-    sqlStatement := `
-    SELECT status FROM htcjobs WHERE htcjobName=$1 AND jobId=$2`
-    row := db.QueryRow(sqlStatement, htcjobName, jobId)
-    err = row.Scan(&status)
+    rows, err := db.Query(`SELECT status FROM htcjobs WHERE htcjobName=? AND jobId=?`,
+        htcjobName, jobId)
+    if err != nil {
+        fmt.Printf("Error while preparing a DB statement")
+        return 0, err
+    }
+    rows.Next()
+    err = rows.Scan(&status)
     if err != nil {
         return 0, err
     }
+    rows.Close()
     return status, nil
 }
