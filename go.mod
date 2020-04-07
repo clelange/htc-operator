@@ -1,4 +1,4 @@
-module htc-operator
+module gitlab.cern.ch/cms-cloud/htc-operator
 
 go 1.13
 
@@ -10,7 +10,6 @@ require (
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/operator-framework/operator-sdk v0.15.2
 	github.com/spf13/pflag v1.0.5
-	gitlab.cern.ch/cms-cloud/htc-operator v0.0.0-20200402123401-5e91f2656c89
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v12.0.0+incompatible
