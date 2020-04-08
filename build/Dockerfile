@@ -7,8 +7,9 @@ ARG CI_PROJECT_NAME=htc-operator
 WORKDIR ${GOPATH}/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}
 COPY . ./
 RUN go mod vendor
-RUN CGO_ENABLED=0 GOOS=linux go build \
+RUN CGO_ENABLED=1 GOOS=linux go build \
       -o /htc-operator \
+      -ldflags '-extldflags "-static"' \
       -gcflags all=-trimpath=${GOPATH}/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE} \
       -asmflags all=-trimpath=${GOPATH}/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE} -mod=vendor \
       gitlab.cern.ch/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}/cmd/manager
