@@ -6,7 +6,7 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: htcjob-argo-example-
+  generateName: no-htcjob-argo-example-
 spec:
   entrypoint: wf
   volumeClaimTemplates:
@@ -41,7 +41,7 @@ spec:
       - mountPath: /data
         name: vol-cephfs-h2t
       command: [sh]
-      source: rm -rf /data/payload
+      source: rm -rf /data/payload-reg
   - name: unzip
     script:
       image: kubeless/unzip
@@ -52,7 +52,7 @@ spec:
       source: |
         curl -OL https://github.com/awesome-workshop/payload/archive/master.zip &&
         unzip master.zip &&
-        mv payload-master /data/payload
+        mv payload-master /data/payload-reg
   - name: dl-samples
     script:
       image: xkxgygmoqkguuddnkz/root1804
@@ -61,7 +61,7 @@ spec:
         name: vol-cephfs-h2t
       command: [sh]
       source: |
-        cd data/payload/ &&
+        cd data/payload-reg/ &&
         mkdir samples &&
         sh download.sh samples/
   - name: skim
@@ -72,7 +72,7 @@ spec:
         name: vol-cephfs-h2t
       command: [bash]
       source: |
-        cd data/payload/ &&
+        cd data/payload-reg/ &&
         mkdir skims &&
         bash skim.sh samples/ skims/
   - name: hist
@@ -83,7 +83,7 @@ spec:
         name: vol-cephfs-h2t
       command: [bash]
       source: |
-        cd data/payload/ &&
+        cd data/payload-reg/ &&
         mkdir histograms &&
         bash histograms.sh skims/ histograms/
   - name: plot
@@ -94,6 +94,6 @@ spec:
         name: vol-cephfs-h2t
       command: [bash]
       source: |
-        cd data/payload/ &&
+        cd data/payload-reg/ &&
         mkdir plots &&
         bash plot.sh histograms/histograms.root plots/

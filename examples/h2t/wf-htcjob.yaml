@@ -1,0 +1,165 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: k8s-jobs-
+spec:
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: htcjob-argo-example-
+spec:
+  entrypoint: wf
+  volumeClaimTemplates:
+  - metadata:
+      name: vol-cephfs-h2t
+    spec:
+      accessModes:
+      - ReadWriteMany
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: csi-cephfs-h2t
+  volumes:
+  - name: eos
+    hostPath:
+      path: /var/eos
+  - name: kinit-secret-vol
+    secret:
+      secretName: kinit-secret
+  templates:
+  - name: wf
+    steps:
+    - - name: clear
+        template: clear
+    - - name: unzip
+        template: unzip
+    - - name: dl-samples
+        template: dl-samples
+    - - name: ceph2eos
+        template: ceph2eos
+    - - name: skim
+        template: skim
+    - - name: eos2ceph
+        template: eos2ceph
+    - - name: hist
+        template: hist
+    - - name: plot
+        template: plot
+  - name: clear
+    script:
+      image: alpine
+      volumeMounts:
+      - mountPath: /data
+        name: vol-cephfs-h2t
+      command: [sh]
+      source: rm -rf /data/payload
+  - name: unzip
+    script:
+      image: kubeless/unzip
+      volumeMounts:
+      - mountPath: /data
+        name: vol-cephfs-h2t
+      command: [bash]
+      source: |
+        curl -OL https://github.com/awesome-workshop/payload/archive/master.zip &&
+        unzip master.zip &&
+        mv payload-master /data/payload
+  - name: dl-samples
+    script:
+      image: xkxgygmoqkguuddnkz/root1804
+      volumeMounts:
+      - mountPath: /data
+        name: vol-cephfs-h2t
+      command: [sh]
+      source: |
+        cd data/payload/ &&
+        mkdir samples &&
+        sh download.sh samples/
+  - name: ceph2eos
+    script:
+      image: gitlab-registry.cern.ch/linuxsupport/cc7-base:latest
+      volumeMounts:
+      - mountPath: /data
+        name: vol-cephfs-h2t
+      - mountPath: /eos
+        name: eos
+        mountPropagation: HostToContainer
+      - mountPath: /mnt/kinit
+        name: kinit-secret-vol
+      command: [bash]
+      source: |
+        USER=`cat /mnt/kinit/username` &&
+        FL=`echo $USER|cut -b 1`
+        useradd $USER &&
+        runuser -l $USER -c "cat /mnt/kinit/password|kinit && \
+          rm -rf /eos/user/$FL/$USER/payload/ && \
+          cp -r /data/payload /eos/user/$FL/$USER/"
+  - name: skim
+    resource:
+      action: create
+      successCondition: status.succeeded > 0
+      failureCondition: status.failed > 0
+      manifest: |
+        apiVersion: htc.cern.ch/v1alpha1
+        kind: HTCJob
+        metadata:
+          name: skimhtcj
+          generateName: owned-eg-
+          ownerReferences:
+          - apiVersion: argoproj.io/v1alpha1
+            blockOwnerDeletion: true
+            kind: Workflow
+            name: "{{workflow.name}}"
+            uid: "{{workflow.uid}}"
+        spec:
+          name: xmpl-img
+          script:
+            image: xkxgygmoqkguuddnkz/root1804
+            command: ["bash"]
+            source: |
+              USER=`whoami` &&
+              FL=`echo $USER|cut -b 1`
+              cd /eos/user/$FL/$USER/payload &&
+              mkdir skims &&
+              bash skim.sh samples/ skims/
+  - name: eos2ceph
+    script:
+      image: gitlab-registry.cern.ch/linuxsupport/cc7-base:latest
+      volumeMounts:
+      - mountPath: /data
+        name: vol-cephfs-h2t
+      - mountPath: /eos
+        name: eos
+        mountPropagation: HostToContainer
+      - mountPath: /mnt/kinit
+        name: kinit-secret-vol
+      command: [bash]
+      source: |
+        USER=`cat /mnt/kinit/username` &&
+        FL=`echo $USER|cut -b 1`
+        useradd $USER &&
+        runuser -l $USER -c "cat /mnt/kinit/password|kinit && \
+          cp -r /eos/user/$FL/$USER/payload/skims /tmp" &&
+        cp -r /tmp/skims /data/payload/
+  - name: hist
+    script:
+      image: xkxgygmoqkguuddnkz/root1804 # 'rootproject/root-conda:6.18.04' has root v20.00, had to make my own img
+      volumeMounts:
+      - mountPath: /data
+        name: vol-cephfs-h2t
+      command: [bash]
+      source: |
+        cd /data/payload/ &&
+        mkdir histograms &&
+        bash histograms.sh skims/ histograms/
+  - name: plot
+    script:
+      image: xkxgygmoqkguuddnkz/root1804 # 'rootproject/root-conda:6.18.04' has root v20.00, had to make my own img
+      volumeMounts:
+      - mountPath: /data
+        name: vol-cephfs-h2t
+      command: [bash]
+      source: |
+        cd /data/payload/ &&
+        mkdir plots &&
+        bash plot.sh histograms/histograms.root plots/
