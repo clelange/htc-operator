@@ -12,7 +12,6 @@ import (
 
 func main() {
 
-    fmt.Println("START")
     ctx := cloudevents.ContextWithTarget(context.Background(),
         "http://cms-batch-test.cern.ch")
 
@@ -29,9 +28,6 @@ func main() {
     // get job name
     jobName := os.Getenv("JOB_NAME")
     jobId := getJobId()
-    fmt.Println("AAA")
-    fmt.Println(jobId)
-    fmt.Println("BBB")
 
     e := cloudevents.NewEvent()
     e.SetType("htcjob.cloudevent")
@@ -39,6 +35,7 @@ func main() {
     _ = e.SetData(cloudevents.ApplicationJSON, map[string]interface{}{
         "name": jobName,
         "jobid": jobId,
+        "retcode": os.Args[1],
     })
 
     err = c.Send(ctx, e)

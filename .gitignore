@@ -87,3 +87,8 @@ deploy/crds/htc.cern.ch_v1alpha1_htcjob_cr_*
 deploy/ceph.yaml
 build.sh
 TODO.txt
+examples/eosls.yaml
+examples/h2t-stor.yaml
+examples/h2t/wf-mock.yaml
+examples/h2t/wf.yaml.bak
+examples/sql3-stor.yaml

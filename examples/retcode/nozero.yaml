@@ -1,0 +1,11 @@
+apiVersion: htc.cern.ch/v1alpha1
+kind: HTCJob
+metadata:
+  name: nozero
+spec:
+  name: nozero
+  script:
+    image: centos
+    command: ["bash"]
+    source: |
+      commandnoexec

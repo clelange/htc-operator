@@ -14,6 +14,7 @@ import (
 type Response struct {
     Name string `json:"name"`
     JobId string `json:"jobid"`
+    RetCode string `json:"retcode"`
 }
 
 func main() {
@@ -37,24 +38,29 @@ func receive(ctx context.Context, event cloudevents.Event) {
     if err := json.Unmarshal(event.Data(), &resp); err != nil {
         panic(err)
     }
-    if err := markJobDone(resp.Name, resp.JobId); err != nil {
+    if err := markJobDone(resp.Name, resp.JobId, resp.RetCode); err != nil {
         panic(err)
     }
 }
 
-func markJobDone(htcjobName string, jobId string) error {
+func markJobDone(htcjobName string, jobId string, retCode string) error {
     db, err := sql.Open("sqlite3", "/data/sqlite/htcjobs.db")
     if err != nil {
         fmt.Printf("Error while creating DB connection (receiver)")
         return err
     }
     defer db.Close()
-    stmt, err := db.Prepare(`UPDATE htcjobs SET status=4 WHERE htcjobName=$1 AND jobid=$2`)
+    jobStatus := 4
+    if retCode != "0" {
+        jobStatus = 7 // 7 means 'error' here (not suspended)
+    }
+    fmt.Printf("jobname: %s, jobid: %s, retcode: %s\n", htcjobName, jobId, retCode)
+    stmt, err := db.Prepare(`UPDATE htcjobs SET status=$1 WHERE htcjobName=$2 AND jobid=$3`)
     if err != nil {
         fmt.Println("Error while creating DB statement (receiver)")
         return err
     }
-    _, err = stmt.Exec(htcjobName, jobId)
+    _, err = stmt.Exec(jobStatus, htcjobName, jobId)
     if err != nil{
         fmt.Println("Error while executing DB statement (receiver)")
         return err
