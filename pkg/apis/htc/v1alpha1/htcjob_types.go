@@ -11,7 +11,7 @@ import (
 
 type ScriptSpec struct {
     Image string `json:"image"`
-    Command []string `json:"command"`
+    Command string `json:"command"`
     Source string `json:"source"`
 }
 

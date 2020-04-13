@@ -1,0 +1,11 @@
+apiVersion: htc.cern.ch/v1alpha1
+kind: HTCJob
+metadata:
+  name: pyexhtc
+spec:
+  name: Pyex-img
+  script:
+    image: python
+    command: python
+    source: |
+      print("A")

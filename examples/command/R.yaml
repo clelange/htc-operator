@@ -1,0 +1,13 @@
+apiVersion: htc.cern.ch/v1alpha1
+kind: HTCJob
+metadata:
+  name: rexhtc
+spec:
+  name: Rex-img
+  script:
+    image: r-base
+    command: Rscript
+    source: |
+      png("/eos/user/t/tbareiki/plot.png")
+      plot(1:10, 1:10)
+      dev.off()

@@ -39,9 +39,7 @@ spec:
             script:
               properties:
                 command:
-                  items:
-                    type: string
-                  type: array
+                  type: string
                 image:
                   type: string
                 source:
