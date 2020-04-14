@@ -6,6 +6,6 @@ spec:
   name: zero
   script:
     image: centos
-    command: ["bash"]
+    command: bash
     source: |
       echo "A"

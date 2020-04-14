@@ -6,6 +6,6 @@ spec:
   name: nozero
   script:
     image: centos
-    command: ["bash"]
+    command: bash
     source: |
       commandnoexec

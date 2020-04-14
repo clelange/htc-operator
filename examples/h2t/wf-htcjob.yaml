@@ -115,7 +115,7 @@ spec:
           name: xmpl-img
           script:
             image: xkxgygmoqkguuddnkz/root1804
-            command: ["bash"]
+            command: bash
             source: |
               USER=`whoami` &&
               FL=`echo $USER|cut -b 1`
@@ -133,7 +133,7 @@ spec:
         mountPropagation: HostToContainer
       - mountPath: /mnt/kinit
         name: kinit-secret-vol
-      command: [bash]
+      command: ["bash"]
       source: |
         USER=`cat /mnt/kinit/username` &&
         FL=`echo $USER|cut -b 1`
