@@ -1,3 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-cephfs-cms
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: csi-cephfs-cms
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:

@@ -90,10 +90,11 @@ spec:
       source: |
         USER=`cat /mnt/kinit/username` &&
         FL=`echo $USER|cut -b 1`
-        useradd $USER &&
-        runuser -l $USER -c "cat /mnt/kinit/password|kinit && \
-          rm -rf /eos/user/$FL/$USER/payload/ && \
-          cp -r /data/payload /eos/user/$FL/$USER/"
+        useradd $USER && su - $USER << EOF
+        cat /mnt/kinit/password|kinit &&
+        rm -rf /eos/user/$FL/$USER/payload/ &&
+        cp -r /data/payload /eos/user/$FL/$USER/
+        EOF
   - name: skim
     resource:
       action: create
