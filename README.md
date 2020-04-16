@@ -88,13 +88,11 @@ create table htcjobs(
 
 The operator pod uses a Docker image based on `build/Dockerfile`.
 The user inside the container must be the same as in the `kinit-secret`, 
-so the line
+so the following line has to be updated:
 
 ```
 ARG USER_NAME=<your_username>
 ```
-
-has to be updated.
 
 Then two separate executables have to be compiled into a directory
 that will be moved to the container:
