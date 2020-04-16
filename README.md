@@ -41,7 +41,7 @@ kubectl create secret --namespace=default \
 Taken from [here](https://blog.zedroot.org/2019/01/21/gitlab-ci-kubernetes-pull-a-private-image-from-a-k8s-pod/).
 
 
-An `sqlite3` database is used to record the statuses of HTCJobs. It is stored in a `cephfs` volume, so to access it,
+An `sqlite3` database is used to record the statuses of HTCJobs. It is stored in a `cephfs` volume, so to access it, 
 StorageClass `csi-cephfs-cms` definition is needed, which looks something like:
 
 ```
@@ -58,7 +58,7 @@ parameters:
   protocol: CEPHFS
   backend: csi-cephfs
   csi-driver: cephfs.csi.ceph.com
-  # the share should be of size > 1
+  # the share should be of size > 1 
   # id for some_share from `manila list`
   osShareID: <ID>
   # id from `manila access-list some_share`
@@ -83,6 +83,37 @@ create table htcjobs(
     tempDir varchar
 );
 ```
+
+## Building the operator
+
+The operator pod uses a Docker image based on `build/Dockerfile`.
+The user inside the container must be the same as in the `kinit-secret`, 
+so the line
+
+```
+ARG USER_NAME=<your_username>
+```
+
+has to be updated.
+
+Then two separate executables have to be compiled into a directory
+that will be moved to the container:
+
+```
+go build -o build/bin/receiver cloudevents/receiver.go
+go build -o build/bin/sender cloudevents/sender.go
+```
+
+To compile the rest of the code, build the container image and
+push it to Docker Hub, run
+
+```
+operator-sdk build xkxgygmoqkguuddnkz/htc-operator
+docker push xkxgygmoqkguuddnkz/htc-operator
+```
+The `xkxgygmoqkguuddnkz` repository is chosen at 'random' and should be changed.
+
+These steps should be repeated after changes to code are made.
 
 ## Operator deployment
 
@@ -158,25 +189,35 @@ The operator is composed of three parts:
 - sqlite database
 - cloudevents receiver and listener
 
-### htc-operator
+### Htc-operator
 
-This is the program that runs in its own pod and updates the state of each HTCJob resource.
-It submits a job to HTCondor based on the resource specification and records the HTC job Id
-and status in the database. Then it waits for the status value to change in the
+This is the program that runs in its own pod and updates the `status` field of each HTCJob resource.
+It submits a job to HTCondor based on the resource specification and
+records the following values in the database.
+
+- htcjobName:name of the HTCJob resource
+- jobId: job Id (ClusterId.ProcId)
+- status: job status, which can gain:
+  - 1 - the job is running (initial status value)
+  - 4 - the singularity process inside the job returned code == 0
+  - 7 - the singularity process inside the job returned code != 0
+- tempDir: path from which the job was sent (note on this at 'Retrieving the logs from HTCondor')
+
+Then it waits for the status value to change from `1` in the
 database to update the status of the resource in the Kubernetes cluster.
 
 The main code for the operator is in `pkg/controller/htcjob/`.
 The operator deployment specification, along with additional resources is defined in
 `deploy/operator.yaml`.
 
-## sqlite database
+### Sqlite database
 
-The `sqlite` database is composed of a single file that is held in a `ceph` volume.
+The `sqlite` database is composed of a single file that is stored in a `ceph` volume.
 To make a switch to `postgresql`, some minimal changes have to be made to
 `pkg/controller/htcjob/db.go`, and an example deployment
 for the database server is in `database/config.yaml`.
 
-## cloudevents receiver and listener
+### Cloudevents receiver and listener
 
 Alongside the main htc-operator program in the operator pod runs a cloudevents
 receiver. Also, each HTCondor job, after the singularity process exits,
@@ -185,6 +226,13 @@ receiver with the job Id and the return code. Then the receiver updates the job
 status based on the job Id in the sqlite database.
 
 Code for both executables is located in `cloudevents/sender.go` and `cloudevents/receiver.go`.
+
+# Retrieving logs from HTCondor
+
+The jobs are submitted with `condor_submit -spool`, since the `-spool` option allows
+manual retrieval of logs of the completed job. In order to get these logs, `condor_transfer_data`
+can be used. However, the data can only be transferred to the same directory from which the job was submitted.
+The directory name is saved in the database and also is outputted by `condor_transfer_data` in case of error.
 
 # Resources used
 
