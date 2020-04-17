@@ -25,22 +25,6 @@ data:
   password: <password in BASE64>
 ```
 
-A special Docker image is used to submit jobs to HTCondor.
-To create a secret `gitlab-registry`, which is  needed
-to pull the `clange/condorsubmit` image from CERN's gitlab registry, run:
-
-```
-kubectl create secret --namespace=default \
-    docker-registry gitlab-registry \
-    --docker-server=gitlab-registry.cern.ch \
-    --docker-username=<gitlab/cern username> \
-    --docker-password=<gitlab authentication token> \
-    --docker-email=<cern email> \
-    --output yaml --dry-run
-```
-Taken from [here](https://blog.zedroot.org/2019/01/21/gitlab-ci-kubernetes-pull-a-private-image-from-a-k8s-pod/).
-
-
 An `sqlite3` database is used to record the statuses of HTCJobs. It is stored in a `cephfs` volume, so to access it, 
 StorageClass `csi-cephfs-cms` definition is needed, which looks something like:
 
@@ -65,10 +49,15 @@ parameters:
   osShareAccessID: <ID>
 ```
 
-Only the two marked fields need to be changed.
-Taken from [here](https://clouddocs.web.cern.ch/containers/tutorials/cephfs.html).
+
+Only the two marked fields need to be changed. Access to these Ids should be limited,
+as they allow the modification of the database that is stored in the `cephfs` volume.
+More instructions on `cephfs` and `manila` can be found [here](https://clouddocs.web.cern.ch/containers/tutorials/cephfs.html)(Kubernetes)
+and [here](https://clouddocs.web.cern.ch/file_shares/quickstart.html)(manila).
 
 __In addition, the volume is assumed to have a database stored in a file in `/sqlite/htcjobs.db`__
+__The folder in which the database file is stores must be writeable, not only the database file__
+TODO: automate the creation of the database file if it doesn't exist.
 
 The database holds a table named `htcjobs` created with:
 
@@ -147,7 +136,8 @@ can be obtained with
 kubectl get htcjob zero -o yaml
 ```
 
-When the job is sent to HTCondor, the description gains an additional `status` field
+When the job is sent to HTCondor, the status of the HTCJob is updated and
+the description shows and additional `status` field
 
 ```yaml
 status:
@@ -164,21 +154,19 @@ which specifies the job status and Id in HTCondor.
 
 The operator submits an HTCondor job, which executes `singularity` with arguments
 taken from the HTCJob spec:
-
-- .spec.script.image: container image to use
-- .spec.script.command: command to be run in the container
-- .spec.script.source: contents of a script file that is given as
-an argument to `.spec.script.command'
-- .spec.script.queue: optional, specify the number of jobs to be sent.
-The job number in the sequence is an argument to the script
-
+```
+.spec.script.image: container image to use
+.spec.script.command: command to be run in the container
+.spec.script.source: contents of a script file that is given as an argument to `.spec.script.command'
+.spec.script.queue: optional, specify the number of jobs to be sent. The job number in the sequence is an argument to the script
+```
 After the job is submitted, its `.status` field gets populated:
-
-- .status.active: number of  currently running HTCondor jobs
-- .status.failed: number of HTCondor jobs in which `singularity` exited with a return code != 0
-- .status.succeeded: number of HTCondor jobs in which `singularity` exited with a return code == 0
-- .status.jobid: array of Ids of the jobs submitted to HTCondor
-
+```
+.status.active: number of  currently running HTCondor jobs
+.status.failed: number of HTCondor jobs in which `singularity` exited with a return code != 0
+.status.succeeded: number of HTCondor jobs in which `singularity` exited with a return code == 0
+.status.jobid: array of Ids of the jobs submitted to HTCondor
+```
 ## Logic and components of the operator
 
 The operator is composed of three parts:
@@ -187,43 +175,55 @@ The operator is composed of three parts:
 - sqlite database
 - cloudevents receiver and listener
 
-### Htc-operator
+## What happens with each HTCJob step-by-step
 
-This is the program that runs in its own pod and updates the `status` field of each HTCJob resource.
-It submits a job to HTCondor based on the resource specification and
-records the following values in the database.
+### 1. Job submission
+
+The htc-operator pod runs a listener application `build/_output/bin/htc-operator`.
+When an HTCJob is created in the cluster, the operator application reads its `.spec` and
+submits an HTCondor job based on it.
+
+### 2. Recording the status of the job
+
+After the job is submitted, its status is recorded in two places:
+- `.status` field of the HTCJob resource in the Kubernetes cluster
+- sqlite database
+
+The following values are written to the table `htcjobs`.
 
 - htcjobName:name of the HTCJob resource
 - jobId: job Id (ClusterId.ProcId)
-- status: job status, which can gain:
-  - 1 - the job is running (initial status value)
-  - 4 - the singularity process inside the job returned code == 0
-  - 7 - the singularity process inside the job returned code != 0
+- status: job status, initial value of which is set to '1', but later is changed to '4' or '7'
 - tempDir: path from which the job was sent (note on this at 'Retrieving the logs from HTCondor')
 
-Then it waits for the status value to change from `1` in the
-database to update the status of the resource in the Kubernetes cluster.
+### 3. Listening
 
-The main code for the operator is in `pkg/controller/htcjob/`.
-The operator deployment specification, along with additional resources is defined in
-`deploy/operator.yaml`.
+After the submission of the job is recorded, the operator application runs a loop
+(the Reconcile loop) that checks whether all jobs submitted have 'succeeded'.
+The database is queried every 10s whether all the jobs from
+`.status.jobid` have the status value equal to '4' in the table `htcjobs`.
 
-### Sqlite database
+### 4. Running the HTCondor job
 
-The `sqlite` database is composed of a single file that is stored in a `ceph` volume.
-To make a switch to `postgresql`, some minimal changes have to be made to
-`pkg/controller/htcjob/db.go`, and an example deployment
-for the database server is in `database/config.yaml`.
+The HTCondor job runs the user-defined script in a `singularity` container.
+Then, when the `singularity` process exits, its return code is recorded.
+The return code and HTCJob name are given as arguments to the `sender` application,
+which is run from within the HTCondor job.
 
-### Cloudevents receiver and listener
+### 5. Updating the job status
 
-Alongside the main htc-operator program in the operator pod runs a cloudevents
-receiver. Also, each HTCondor job, after the singularity process exits,
-runs a cloudevents sender executable that sends an HTTP request to the
-receiver with the job Id and the return code. Then the receiver updates the job
-status based on the job Id in the sqlite database.
+Alongside the `htc-operator` application, in the operator pod runs a `receiver` application.
+When the HTCondor job finishes, the 'receiver' gets an HTTP request from the `sender`, which includes
+the HTCJob name, jobid and return code, which are used to update the HTCondor job status in the database.
+If the return code is equal to zero, status value in `htcjobs` table is set to `4` for that job, `7` otherwise.
+The `htc-operator` application calculates the number of completed jobs during every query. If the status is equal to `4`,
+it contributes to the count of `.status.succeeded`, if it is equal to `7` - to `.status.failed`,
+and if it is hasn't changed and is still equal to `1` - to `.status.active`.
 
-Code for both executables is located in `cloudevents/sender.go` and `cloudevents/receiver.go`.
+### 6. Finishing the Reconcile loop
+
+When the number of `.status.active` becomes equal to zero, that is, all HTCJobs have completed,
+the Reconcile loop exits and the state of the HTCJob resource is no longer modified.
 
 # Retrieving logs from HTCondor
 
