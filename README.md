@@ -25,7 +25,8 @@ data:
   password: <password in BASE64>
 ```
 
-An `sqlite3` database is used to record the statuses of HTCJobs. It is stored in a `cephfs` volume, so to access it, 
+An `sqlite3` database is used to record the statuses of HTCJobs.
+It is stored in a `cephfs` volume, so to access it, 
 StorageClass `csi-cephfs-cms` definition is needed, which looks something like:
 
 ```
@@ -55,23 +56,23 @@ as they allow the modification of the database that is stored in the `cephfs` vo
 More instructions on `cephfs` and `manila` can be found [here](https://clouddocs.web.cern.ch/containers/tutorials/cephfs.html)(Kubernetes)
 and [here](https://clouddocs.web.cern.ch/file_shares/quickstart.html)(manila).
 
-__In addition, the volume is assumed to have a database stored in a file in `/sqlite/htcjobs.db`__
-__The folder in which the database file is stores must be writeable, not only the database file__
-TODO: automate the creation of the database file if it doesn't exist.
+__The cephfs volume needs to have a directory `/sqlite/` that is writable.__
+The database holds a table named `htcjobs`, and is automatically created in the
+mentioned directory located in the cephfs volume if it's not already there.
+After the initial creation, the database is only modified to add additional fields,
+but never recreated, even when the operator is.
 
-The database holds a table named `htcjobs` created with:
+## Ingress for cloudevents
 
-```
-# run in shell to create the database
-sqlite3 htcjob.db
-# run in sqlite to create the table
-create table htcjobs(
-    htcjobName varchar,
-    jobId char(10),
-    status integer,
-    tempDir varchar
-);
-```
+In order to make communication between a process inside an HTCondor job and the
+operator pod possible, an `Ingress` and a `Service` are created wwhen deploying
+the operator; their definitions can be found in `deploy/operator.yaml`.
+The `Service` specifies a host to be used, which has to match the
+host assigned to the Kubernetes cluster on which the operator is running.
+Instructions on how to setup a custom domain for the cluster
+(like the `cms-batch-test.cern.ch` in this example), can be found
+[here](https://clouddocs.web.cern.ch/containers/tutorials/lb.html) under
+sections __Cluster Setup__ and __Simple HTTP Ingress__.
 
 ## Building the operator
 
