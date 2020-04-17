@@ -30,7 +30,7 @@ spec:
           # Replace this with the built image name
           image: xkxgygmoqkguuddnkz/htc-operator
           command: ["sh", "-c"]
-          args: ["receiver & htc-operator"]
+          args: ["ensureDB && receiver & htc-operator"]
           imagePullPolicy: Always
           volumeMounts:
           - mountPath: /mnt/kinit

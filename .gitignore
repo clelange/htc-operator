@@ -77,7 +77,6 @@ tags
 # End of https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
 secrets/
 tmp/
-build/bin
 build/_output
 build/Dockerfile.bak*
 internal/
@@ -92,3 +91,6 @@ examples/h2t-stor.yaml
 examples/h2t/wf-mock.yaml
 examples/h2t/wf.yaml.bak
 examples/sql3-stor.yaml
+# hide binaries
+build/bin/sender
+build/bin/receiver

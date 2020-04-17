@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# check if table 'htcjobs' exists
+sqlite3 /data/sqlite/htcjobs.db << EOF
+select * from htcjobs;
+.q
+EOF
+# if an error was returned, then simply create the table
+if test $? -ne 0; then
+sqlite3 /data/sqlite/htcjobs.db << EOF
+create table htcjobs(
+    htcjobName varchar,
+    jobId char(10),
+    status integer,
+    tempDir varchar
+);
+.q
+EOF
+fi
+# check if the creation was successful
+# return a nonzero retcode otherwise from the script
+sqlite3 /data/sqlite/htcjobs.db << EOF
+select * from htcjobs;
+.q
+EOF
