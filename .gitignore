@@ -84,7 +84,7 @@ internal/
 Dockerfile.ci
 Dockerfile.normal
 deploy/crds/htc.cern.ch_v1alpha1_htcjob_cr_*
-deploy/ceph.yaml
+#deploy/ceph.yaml
 build.sh
 TODO.txt
 examples/eosls.yaml
