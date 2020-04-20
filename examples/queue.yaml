@@ -1,0 +1,12 @@
+apiVersion: htc.cern.ch/v1alpha1
+kind: HTCJob
+metadata:
+  name: queue
+spec:
+  name: queue
+  queue: 3
+  script:
+    image: centos
+    command: bash
+    source: |
+      echo $1

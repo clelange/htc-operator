@@ -1,0 +1,8 @@
+#!/bin/bash
+
+set -x
+export USER=`cat /mnt/kinit/username`
+export _condor_SCHEDD_HOST="bigbird10.cern.ch"
+export _condor_CREDD_HOST="bigbird10.cern.ch"
+cat /mnt/kinit/password| kinit
+condor_rm $@

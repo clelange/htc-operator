@@ -3,8 +3,9 @@ package htcjob
 import (
     "context"
     "time"
-
-    //"fmt"
+    "os/exec"
+    "strings"
+    "fmt"
     htcv1alpha1 "gitlab.cern.ch/cms-cloud/htc-operator/pkg/apis/htc/v1alpha1"
 
     corev1 "k8s.io/api/core/v1"
@@ -90,6 +91,8 @@ type ReconcileHTCJob struct {
 // Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
+const htcjobFinalizer = "finalizer.htc.cern.ch"
+
 func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
     reconcile.Result, error) {
     reqLogger := log.WithValues("Request.Namespace", request.Namespace,
@@ -104,6 +107,32 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
             return reconcile.Result{}, nil
         }
         return reconcile.Result{}, err
+    }
+    //// actions on delete (finalizer)
+
+    // Add finalizer for this CR
+    if !contains(instance.GetFinalizers(), htcjobFinalizer) {
+        if err := r.addFinalizer(instance); err != nil {
+            return reconcile.Result{}, err
+        }
+    }
+    isHTCJobMarkedToBeDeleted := instance.GetDeletionTimestamp() != nil
+    if isHTCJobMarkedToBeDeleted {
+        if contains(instance.GetFinalizers(), htcjobFinalizer) {
+            // Run finalization logic for htcjobFinalizer. If the
+            // finalization logic fails, don't remove the finalizer so
+            // that we can retry during the next reconciliation.
+            if err := r.finalizeHTCJob(instance); err != nil {
+                return reconcile.Result{}, err
+            }
+            // Remove htcjobFinalizer. Once all finalizers have been
+            // removed, the object will be deleted.
+            instance.SetFinalizers(remove(instance.GetFinalizers(), htcjobFinalizer))
+            err := r.client.Update(context.TODO(), instance)
+            if err != nil {
+                return reconcile.Result{}, err
+            }
+        }
     }
     // Check if the Job already exists
     if len(instance.Status.JobId) == 0 {
@@ -157,10 +186,46 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
             return reconcile.Result{}, err
         }
         if instance.Status.Active == 0 {
-            return reconcile.Result{}, nil
+            return reconcile.Result{RequeueAfter: time.Second * 10}, nil
         }
         return reconcile.Result{RequeueAfter: time.Second * 10}, nil
     }
 
     return reconcile.Result{RequeueAfter: time.Second * 10}, nil
+}
+func (r *ReconcileHTCJob) finalizeHTCJob(v *htcv1alpha1.HTCJob) error {
+    // the actual cleanup is done here
+    out, _ := exec.Command("rmCondor", strings.Join(v.Status.JobId, " ")).CombinedOutput()
+    fmt.Println(strings.Join(v.Status.JobId, " "))
+    fmt.Println(string(out))
+    return nil
+}
+
+func (r *ReconcileHTCJob) addFinalizer(v *htcv1alpha1.HTCJob) error {
+    v.SetFinalizers(append(v.GetFinalizers(), htcjobFinalizer))
+
+    // Update CR
+    err := r.client.Update(context.TODO(), v)
+    if err != nil {
+        return err
+    }
+    return nil
+}
+
+func contains(list []string, s string) bool {
+    for _, v := range list {
+        if v == s {
+            return true
+        }
+    }
+    return false
+}
+
+func remove(list []string, s string) []string {
+    for i, v := range list {
+        if v == s {
+            list = append(list[:i], list[i+1:]...)
+        }
+    }
+    return list
 }
