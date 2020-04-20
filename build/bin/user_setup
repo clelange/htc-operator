@@ -7,5 +7,5 @@ mkdir -p ${HOME}
 chown ${USER_UID}:0 ${HOME}
 chmod ug+rwx ${HOME}
 
-# no need for this script to remain in the image after running
-rm $0
+## no need for this script to remain in the image after running
+#rm $0
