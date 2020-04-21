@@ -46,7 +46,7 @@ File `wf-htcjob.yaml` includes the same workflow, but utilizes an HTCJob resourc
 Folder `root18` includes a Dockerfile, which builds the required image, since the one used in the source material
 could not assure the correct version of `root`.
 
-## wf-htcjobs
+### wf-htcjobs
 
 The `skim` steps is sent to HTCondor for execution.
 In other to ensure that the HTCJob is also deleted when the Argo workflow is deleted,
