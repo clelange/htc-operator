@@ -224,7 +224,9 @@ and if it is hasn't changed and is still equal to `1` - to `.status.active`.
 ### 6. Finishing the Reconcile loop
 
 When the number of `.status.active` becomes equal to zero, that is, all HTCJobs have completed,
-the Reconcile loop exits and the state of the HTCJob resource is no longer modified.
+the Reconcile loop keeps on running without doing any modifications to the HTCJob status,
+until the resource is deleted. and the finalizer attached to it removes the HTCondor jobs associated
+with it.
 
 # Retrieving logs from HTCondor
 
