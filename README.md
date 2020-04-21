@@ -60,7 +60,7 @@ __The cephfs volume needs to have a directory `/sqlite/` that is writable.__
 The database holds a table named `htcjobs`, and is automatically created in the
 mentioned directory located in the cephfs volume if it's not already there.
 After the initial creation, the database is only modified to add additional fields,
-but never recreated, even when the operator is.
+but never recreated, even when the operator deleted and created anew.
 
 ## Ingress for cloudevents
 

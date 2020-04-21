@@ -1,11 +1,11 @@
 apiVersion: htc.cern.ch/v1alpha1
 kind: HTCJob
 metadata:
-  name: nozero
+  name: notzero
 spec:
-  name: nozero
+  name: notzero
   script:
     image: centos
     command: bash
     source: |
-      commandnoexec
+      commandt-that-doesnt-exist
