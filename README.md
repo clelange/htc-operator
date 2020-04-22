@@ -53,8 +53,8 @@ parameters:
 
 Only the two marked fields need to be changed. Access to these Ids should be limited,
 as they allow the modification of the database that is stored in the `cephfs` volume.
-More instructions on `cephfs` and `manila` can be found [here](https://clouddocs.web.cern.ch/containers/tutorials/cephfs.html)(Kubernetes)
-and [here](https://clouddocs.web.cern.ch/file_shares/quickstart.html)(manila).
+More instructions on `cephfs` and `manila` can be found [here](https://clouddocs.web.cern.ch/containers/tutorials/cephfs.html) (Kubernetes)
+and [here](https://clouddocs.web.cern.ch/file_shares/quickstart.html) (manila).
 
 __The cephfs volume needs to have a directory `/sqlite/` that is writable.__
 The database holds a table named `htcjobs`, and is automatically created in the
@@ -65,8 +65,8 @@ but never recreated, even when the operator deleted and created anew.
 ## Ingress for cloudevents
 
 In order to make communication between a process inside an HTCondor job and the
-operator pod possible, an `Ingress` and a `Service` are created wwhen deploying
-the operator; their definitions can be found in `deploy/operator.yaml`.
+operator pod possible, an `Ingress` and a `Service` are created when deploying
+the operator; their definitions can be found in [deploy/operator.yaml](deploy/operator.yaml).
 The `Service` specifies a host to be used, which has to match the
 host assigned to the Kubernetes cluster on which the operator is running.
 Instructions on how to setup a custom domain for the cluster
@@ -76,7 +76,7 @@ sections __Cluster Setup__ and __Simple HTTP Ingress__.
 
 ## Building the operator
 
-The operator pod uses a Docker image based on `build/Dockerfile`.
+The operator pod uses a Docker image based on [build/Dockerfile](build/Dockerfile).
 The user inside the container must be the same as in the `kinit-secret`, 
 so the following line has to be updated:
 
@@ -114,7 +114,7 @@ kubectl create -f deploy/crds/htc.cern.ch_htcjobs_crd.yaml
 
 ## Example
 
-A simple example can be found in `examples/retcode/zero.yaml`:
+A simple example can be found in [examples/retcode/zero.yaml](examples/retcode/zero.yaml):
 
 ```yaml
 apiVersion: htc.cern.ch/v1alpha1
@@ -155,19 +155,18 @@ which specifies the job status and Id in HTCondor.
 
 The operator submits an HTCondor job, which executes `singularity` with arguments
 taken from the HTCJob spec:
-```
-.spec.script.image: container image to use
-.spec.script.command: command to be run in the container
-.spec.script.source: contents of a script file that is given as an argument to `.spec.script.command'
-.spec.script.queue: optional, specify the number of jobs to be sent. The job number in the sequence is an argument to the script
-```
+- `.spec.script.image`: container image to use
+- `.spec.script.command`: command to be run in the container
+- `.spec.script.source`: contents of a script file that is given as an argument to `.spec.script.command'
+- `.spec.script.queue`: optional, specify the number of jobs to be sent. The job number in the sequence is an argument to the script
+
+
 After the job is submitted, its `.status` field gets populated:
-```
-.status.active: number of  currently running HTCondor jobs
-.status.failed: number of HTCondor jobs in which `singularity` exited with a return code != 0
-.status.succeeded: number of HTCondor jobs in which `singularity` exited with a return code == 0
-.status.jobid: array of Ids of the jobs submitted to HTCondor
-```
+- `.status.active`: number of  currently running HTCondor jobs
+- `.status.failed`: number of HTCondor jobs in which `singularity` exited with a return code != 0
+- `.status.succeeded`: number of HTCondor jobs in which `singularity` exited with a return code == 0
+- `.status.jobid`: array of Ids of the jobs submitted to HTCondor
+
 ## Logic and components of the operator
 
 The operator is composed of three parts:
