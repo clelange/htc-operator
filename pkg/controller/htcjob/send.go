@@ -75,9 +75,15 @@ func sendJob(script string, jobShellScript string, jobSubFile string,
         return "Failed writing job submission file", err
     }
     // submit the job
-    _, err = exec.Command("subCondor", tempDirName).CombinedOutput()
-    if err != nil {
-        return "Failed job submission", err
+    // try twice
+    for tries := 1; true; tries++ {
+        _, err = exec.Command("subCondor", tempDirName).CombinedOutput()
+        if err != nil && tries >= 2 {
+            return "Failed job submission", err
+        }
+        if err == nil {
+            break
+        }
     }
     return "", nil
 }
