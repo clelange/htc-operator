@@ -6,7 +6,7 @@ before_script:
   - export OS_AUTH_URL="https://keystone.cern.ch/main/v3"
   - export OS_IDENTITY_API_VERSION="3"
   - export OS_USERNAME="$COE_USER"
-  - export OS_PASSWORD=$(echo $COE_PASS| sed 's/=/!/g')
+  - export OS_PASSWORD=`echo $COE_PASS| sed 's/=/~/g'`
   - export OS_PROJECT_NAME="CMS Analysis Recast effort"
   - export OS_REGION_NAME="cern"
   - export OS_DEFAULT_DOMAIN_NAME="default"
