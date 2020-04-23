@@ -17,5 +17,5 @@ test k8s:
   stage: test
   image: gitlab-registry.cern.ch/cloud/ciadm
   script:
-     - echo $CERN_USER
+     - echo $OS_USERNAME
      - openstack coe cluster list
