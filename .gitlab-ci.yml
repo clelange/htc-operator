@@ -20,12 +20,13 @@ build_go_binary:
   stage: compile
   image: golang:1.13-buster
   script:
+    - ls
     - export GO111MODULE=on
     - go mod download
     - echo 'Building static go binary ...'
     - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/bin/receiver cloudevents/receiver.go
     - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/bin/sender cloudevents/sender.go
-    - wget 'https://download.docker.com/linux/static/stable/x86_64/docker-19.03.8.tgz'|tar xvzf -
+    - curl -sSL 'https://download.docker.com/linux/static/stable/x86_64/docker-19.03.8.tgz'|tar xvzf -
     - export PATH="$PATH/`pwd`/docker"
     - operator-build randomstring
   artifacts:
