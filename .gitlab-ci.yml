@@ -5,8 +5,8 @@ before_script:
   - export CLUSTER_NAME=cms-cvmfs-validation-$(echo $CI_COMMIT_SHA | head -c 6)
   - export OS_AUTH_URL="https://keystone.cern.ch/main/v3"
   - export OS_IDENTITY_API_VERSION="3"
-  - export OS_USERNAME=$CERN_USER
-  - export OS_PASSWORD=$CERN_PASS
+  - export OS_USERNAME="$CERN_USER"
+  - export OS_PASSWORD="$CERN_PASS"
   - export OS_PROJECT_NAME="CMS Analysis Recast effort"
   - export OS_REGION_NAME="cern"
   - export OS_DEFAULT_DOMAIN_NAME="default"
