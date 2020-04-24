@@ -25,6 +25,8 @@ spec:
         name: htc-operator
     spec:
       serviceAccountName: htc-operator
+      imagePullSecrets:
+      - name: regsecret
       containers:
         - name: htc-operator
           # Replace this with the built image name

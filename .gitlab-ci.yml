@@ -72,7 +72,8 @@ test k8s:
     - openstack coe cluster config $CLUSTER_NAME
     - export KUBECONFIG=config
     - ./ci/k8s-setup.sh
-    - cat ci/operator-template.yaml| sed "s/<HOSTNAME_HERE>/${CLUSTER_NAME}.cern.ch/"| kubectl create -f -
+    - cat deploy/operator.yaml| sed "s/cms-batch-test.cern.ch/${CLUSTER_NAME}.cern.ch/"| kubectl create -f -
+    - kubectl create -f examples/retcode/zero.yaml
 
 #cleanup test clusters:
 #  stage: cleanup
