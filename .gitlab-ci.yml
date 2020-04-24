@@ -69,6 +69,7 @@ test k8s:
   script:
 #    - ./ci/create-cluster.sh
     - ls
+    - openstack coe cluster config $CLUSTER_NAME
     - export KUBECONFIG=config
     - ./ci/k8s-setup.sh
     - cat ci/operator-template.yaml| sed "s/<HOSTNAME_HERE>/${CLUSTER_NAME}.cern.ch/"| kubectl create -f -
