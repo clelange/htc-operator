@@ -83,7 +83,7 @@ cleanup test clusters:
   stage: cleanup
   image: gitlab-registry.cern.ch/cloud/ciadm
   script:
-    - export KUBECONFIG=config
+    - export KUBECONFIG=`pwd`/config
     - kubectl delete htcjob --all
     - openstack coe cluster show ${CLUSTER_NAME}; if [ $? -eq 0 ]; then openstack coe cluster delete ${CLUSTER_NAME} || true; fi
     - sleep 5
