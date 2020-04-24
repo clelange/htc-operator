@@ -1,5 +1,6 @@
 #!/bin/bash
 # create tha cluster
+set +x
 openstack coe cluster create ${CLUSTER_NAME} \
   --keypair lxplus \
   --cluster-template kubernetes-1.15.3-2 \
