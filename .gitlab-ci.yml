@@ -1,6 +1,6 @@
 stages:
   - compile
-#  - build
+  - build
   - test
   - cleanup
 
