@@ -10,3 +10,10 @@ data:
   password: `echo $OS_PASSWORD|base64`"| kubectl create -f -
 
 kubectl create -f deploy/ceph.yaml
+
+kubectl create secret --namespace=default \
+  docker-registry gitlab-registry \
+  --docker-server=gitlab-registry.cern.ch \
+  --docker-username=$COE_USER \
+  --docker-password=$REGISTRY_TOK \
+  --output yaml --dry-run 

@@ -28,7 +28,7 @@ spec:
       containers:
         - name: htc-operator
           # Replace this with the built image name
-          image: xkxgygmoqkguuddnkz/htc-operator
+          image: gitlab-registry.cern.ch/cms-cloud/htc-operator:latest
           command: ["sh", "-c"]
           args: [main]
           imagePullPolicy: Always

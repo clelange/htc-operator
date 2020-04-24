@@ -1,20 +1,21 @@
 stages:
-#  - test
   - compile
   - build
-#  - cleanup
+  - test
+  - cleanup
 
-#before_script:
+before_script:
 #  - export CLUSTER_NAME=htc-operator-test-$(echo $CI_COMMIT_SHA | head -c 6)
-#  - export OS_AUTH_URL="https://keystone.cern.ch/main/v3"
-#  - export OS_IDENTITY_API_VERSION="3"
-#  - export OS_USERNAME="$COE_USER"
-#  - export OS_PASSWORD=`echo $COE_PASS| sed 's/=/~/g'`
-#  - export OS_PROJECT_NAME="CMS Analysis Recast effort"
-#  - export OS_REGION_NAME="cern"
-#  - export OS_DEFAULT_DOMAIN_NAME="default"
-#  - export OS_TENANT_ID="cb60f871-095e-4628-8f1b-bcd127513ef8"
-#  - export OS_TENANT_NAME="CMS Analysis Recast effort"
+  - export CLUSTER_NAME=cms-cvmfs-validation
+  - export OS_AUTH_URL="https://keystone.cern.ch/main/v3"
+  - export OS_IDENTITY_API_VERSION="3"
+  - export OS_USERNAME="$COE_USER"
+  - export OS_PASSWORD=`echo $COE_PASS| sed 's/=/~/g'`
+  - export OS_PROJECT_NAME="CMS Analysis Recast effort"
+  - export OS_REGION_NAME="cern"
+  - export OS_DEFAULT_DOMAIN_NAME="default"
+  - export OS_TENANT_ID="cb60f871-095e-4628-8f1b-bcd127513ef8"
+  - export OS_TENANT_NAME="CMS Analysis Recast effort"
 
 build_go_binary:
   stage: compile
@@ -62,18 +63,13 @@ build_operator:
     DOCKERFILE_PATH: build/Dockerfile
 
 
-#test k8s:
-#  stage: test
-#  image: gitlab-registry.cern.ch/cloud/ciadm
-#  script:
-#    - openstack coe cluster create ${CLUSTER_NAME} --keypair lxplus --cluster-template kubernetes-1.15.3-2 --node-count 1 --labels influx_grafana_dashboard_enabled=true --labels cephfs_csi_enabled=true --labels kube_csi_version=cern-csi-1.0-1 --labels cloud_provider_tag=v1.15.0 --labels container_infra_prefix=gitlab-registry.cern.ch/cloud/atomic-system-containers/ --labels manila_enabled=true --labels cgroup_driver=cgroupfs --labels autoscaler_tag=v1.15.2 --labels kube_csi_enabled=true --labels flannel_backend=vxlan --labels cvmfs_csi_version=v1.0.0 --labels admission_control_list=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota,Priority --labels ingress_controller=traefik --labels manila_version=v0.3.0 --labels cvmfs_csi_enabled=true --labels heat_container_agent_tag=stein-dev-2 --labels kube_tag=v1.15.3 --labels cephfs_csi_version=cern-csi-1.0-1
-#    - sleep 10
-#    - STATUS=$(openstack coe cluster show $CLUSTER_NAME -c status | grep 'status ' | awk '{print $4}')
-#    - while [ "$STATUS" != "CREATE_COMPLETE" ] && [ "$STATUS" != "CREATE_FAILED" ]; do STATUS=$(openstack coe cluster show $CLUSTER_NAME -c status | grep 'status ' | awk '{print $4}'); done
-#    - openstack coe cluster show $CLUSTER_NAME
-#    - openstack coe cluster config $CLUSTER_NAME
-#    - export KUBECONFIG=config
-
+test k8s:
+  stage: test
+  image: gitlab-registry.cern.ch/cloud/ciadm
+  script:
+#    - ./ci/create-cluster.sh
+    - ./ci/k8s-setup.sh
+    - cat ci/operator-template.yaml| sed "s/<HOSTNAME_HERE>/${CLUSTER_NAME}.cern.ch/"| kubectl create -f -
 
 #cleanup test clusters:
 #  stage: cleanup
