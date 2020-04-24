@@ -11,7 +11,7 @@ data:
 
 kubectl create -f deploy/ceph.yaml
 
-kubectl create secret --namespace=default \
+kubectl create secret \
   docker-registry gitlab-registry \
   --docker-server=gitlab-registry.cern.ch \
   --docker-username=$COE_USER \
