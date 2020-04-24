@@ -5,8 +5,8 @@ stages:
   - cleanup
 
 before_script:
-#  - export CLUSTER_NAME=htc-operator-test-$(echo $CI_COMMIT_SHA | head -c 6)
-  - export CLUSTER_NAME=cms-cvmfs-validation
+  - export CLUSTER_NAME=htc-operator-test-$(echo $CI_COMMIT_SHA | head -c 6)
+#  - export CLUSTER_NAME=cms-cvmfs-validation
   - export OS_AUTH_URL="https://keystone.cern.ch/main/v3"
   - export OS_IDENTITY_API_VERSION="3"
   - export OS_USERNAME="$COE_USER"
@@ -68,10 +68,8 @@ test k8s:
   stage: test
   image: gitlab-registry.cern.ch/cloud/ciadm
   script:
-#    - ./ci/create-cluster.sh
-    - ls
-    - openstack coe cluster config $CLUSTER_NAME
-    - export KUBECONFIG=config
+    - ./ci/create-cluster.sh
+#    - export KUBECONFIG=config
     - ./ci/k8s-setup.sh
     - cat deploy/operator.yaml| sed "s/cms-batch-test.cern.ch/${CLUSTER_NAME}.cern.ch/"| kubectl create -f -
     - kubectl create -f deploy/service_account.yaml
@@ -81,11 +79,13 @@ test k8s:
     - kubectl create -f examples/retcode/zero.yaml
     - ./ci/wait-HTCJob.sh
 
-#cleanup test clusters:
-#  stage: cleanup
-#  image: gitlab-registry.cern.ch/cloud/ciadm
-#  script:
-#    - openstack coe cluster show ${CLUSTER_NAME}; if [ $? -eq 0 ]; then openstack coe cluster delete ${CLUSTER_NAME} || true; fi
-#    - sleep 5
-#    - while openstack coe cluster show ${CLUSTER_NAME}; [ $? -eq 0 ]; do sleep 3; done
-#  when: always
+cleanup test clusters:
+  stage: cleanup
+  image: gitlab-registry.cern.ch/cloud/ciadm
+  script:
+    - export KUBECONFIG=config
+    - kubectl delete htcjob --all
+    - openstack coe cluster show ${CLUSTER_NAME}; if [ $? -eq 0 ]; then openstack coe cluster delete ${CLUSTER_NAME} || true; fi
+    - sleep 5
+    - while openstack coe cluster show ${CLUSTER_NAME}; [ $? -eq 0 ]; do sleep 3; done
+  when: always
