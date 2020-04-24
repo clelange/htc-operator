@@ -1,6 +1,6 @@
 stages:
   - compile
-  - build
+#  - build
   - test
   - cleanup
 
@@ -32,35 +32,35 @@ build_go_binary:
     paths:
       - build
 
-build_operator:
-  stage: build
-  image:
-    # We recommend using the CERN version of the Kaniko image: gitlab-registry.cern.ch/ci-tools/docker-image-builder
-    name: gitlab-registry.cern.ch/ci-tools/docker-image-builder
-    entrypoint: [""]
-  script:
-    #- export DATE=`date -u +%Y.%m.%dT%H-%M-%SZ`
-    # TAG will have a different value depending on what branch the docker image is built
-    # If the branch is master TAG will be composed by the word "RELEASE" and the current date in UTC
-    # If the branch is a feature branch TAG will be the name of that branch
-    #- export TAG=${TAG:-"RELEASE".$DATE}
-    - export TAG=latest
-    - export CONTEXT=${CONTEXT:-$CI_PROJECT_DIR}
-    - export DOCKERFILE_PATH=${DOCKERFILE_PATH:-Dockerfile}
-    - |
-      export DOCKERFILE=$CONTEXT/$DOCKERFILE_PATH
-      if ! [ -f "$DOCKERFILE" ]; then
-        echo 'Dockerfile not found, please set both CONTEXT and DOCKERFILE_PATH properly' >&2
-        exit 1
-      fi
-    # Prepare Kaniko configuration file:
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    # Build and push the image from the Dockerfile at the root of the project.
-    # To push to a specific docker tag, amend the --destination parameter, e.g. --destination $CI_REGISTRY_IMAGE:$CI_BUILD_REF_NAME
-    # See https://docs.gitlab.com/ee/ci/variables/predefined_variables.html#variables-reference for available variables
-    - /kaniko/executor --context "$CONTEXT" --dockerfile "$CONTEXT/$DOCKERFILE_PATH" --destination "$CI_REGISTRY_IMAGE:$TAG" --build-arg CI_PROJECT_NAMESPACE="${CI_PROJECT_NAMESPACE}" --build-arg CI_PROJECT_NAME="${CI_PROJECT_NAME}"
-  variables:
-    DOCKERFILE_PATH: build/Dockerfile
+#build_operator:
+#  stage: build
+#  image:
+#    # We recommend using the CERN version of the Kaniko image: gitlab-registry.cern.ch/ci-tools/docker-image-builder
+#    name: gitlab-registry.cern.ch/ci-tools/docker-image-builder
+#    entrypoint: [""]
+#  script:
+#    #- export DATE=`date -u +%Y.%m.%dT%H-%M-%SZ`
+#    # TAG will have a different value depending on what branch the docker image is built
+#    # If the branch is master TAG will be composed by the word "RELEASE" and the current date in UTC
+#    # If the branch is a feature branch TAG will be the name of that branch
+#    #- export TAG=${TAG:-"RELEASE".$DATE}
+#    - export TAG=latest
+#    - export CONTEXT=${CONTEXT:-$CI_PROJECT_DIR}
+#    - export DOCKERFILE_PATH=${DOCKERFILE_PATH:-Dockerfile}
+#    - |
+#      export DOCKERFILE=$CONTEXT/$DOCKERFILE_PATH
+#      if ! [ -f "$DOCKERFILE" ]; then
+#        echo 'Dockerfile not found, please set both CONTEXT and DOCKERFILE_PATH properly' >&2
+#        exit 1
+#      fi
+#    # Prepare Kaniko configuration file:
+#    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+#    # Build and push the image from the Dockerfile at the root of the project.
+#    # To push to a specific docker tag, amend the --destination parameter, e.g. --destination $CI_REGISTRY_IMAGE:$CI_BUILD_REF_NAME
+#    # See https://docs.gitlab.com/ee/ci/variables/predefined_variables.html#variables-reference for available variables
+#    - /kaniko/executor --context "$CONTEXT" --dockerfile "$CONTEXT/$DOCKERFILE_PATH" --destination "$CI_REGISTRY_IMAGE:$TAG" --build-arg CI_PROJECT_NAMESPACE="${CI_PROJECT_NAMESPACE}" --build-arg CI_PROJECT_NAME="${CI_PROJECT_NAME}"
+#  variables:
+#    DOCKERFILE_PATH: build/Dockerfile
 
 
 test k8s:
