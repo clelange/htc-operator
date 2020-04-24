@@ -16,4 +16,5 @@ kubectl create secret \
   --docker-server=gitlab-registry.cern.ch \
   --docker-username=$COE_USER \
   --docker-password=$REGISTRY_TOK \
+  --docker-email=$GITLAB_USER_EMAIL \
   --output yaml --dry-run| kubectl create -f -
