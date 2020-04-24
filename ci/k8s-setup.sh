@@ -1,5 +1,5 @@
 #!/bin/bash
-set +x
+set -x
 echo "apiVersion: v1
 kind: Secret
 metadata:
