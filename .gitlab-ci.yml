@@ -78,6 +78,7 @@ test k8s:
     - kubectl create -f deploy/role.yaml
     - kubectl create -f deploy/crds/htc.cern.ch_htcjobs_crd.yaml
     - kubectl create -f examples/retcode/zero.yaml
+    - ./ci/wait-HTCJob.sh
 
 #cleanup test clusters:
 #  stage: cleanup
