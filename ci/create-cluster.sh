@@ -46,4 +46,4 @@ export KUBECONFIG=`pwd`/config
 kubectl label node $A_NODE role=ingress
 export A_NODE=`kubectl get no|grep 'node-0'|awk '{print $1}'`
 openstack server set --property landb-alias=$CLUSTER_NAME--load-1- $A_NODE
-sleep 1000
+#sleep 1000
