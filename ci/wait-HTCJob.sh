@@ -1,6 +1,6 @@
 #!/bin/bash
 
-while test "$(k get htcjob zero -o yaml|grep '^  succeeded:')" != "  succeeded: 1"
+while test "$(kubectl get htcjob zero -o yaml|grep '^  succeeded:')" != "  succeeded: 1"
 do
     sleep 10
 done
