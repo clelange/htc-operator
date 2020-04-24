@@ -26,9 +26,9 @@ build_go_binary:
     - go mod download
     - echo 'Building static go binary ...'
     - sed -i "s/cms-batch-test/$CLUSTER_NAME/g" cloudevents/sender.go
-    - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/bin/receiver cloudevents/receiver.go
-    - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/bin/sender cloudevents/sender.go
-    - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/_output/bin/htc-operator cmd/manager/main.go
+    - GOOS=linux GOARCH=amd64 go build -o build/bin/receiver cloudevents/receiver.go
+    - GOOS=linux GOARCH=amd64 go build -o build/bin/sender cloudevents/sender.go
+    - GOOS=linux GOARCH=amd64 go build -o build/_output/bin/htc-operator cmd/manager/main.go
   artifacts:
     paths:
       - build
