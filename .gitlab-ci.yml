@@ -26,9 +26,9 @@ build_go_binary:
     - go mod download
     - echo 'Building static go binary ...'
     - sed -i "s/cms-batch-test/$CLUSTER_NAME/g" cloudevents/sender.go
-    - GOOS=linux GOARCH=amd64 go build -o build/bin/receiver -ldflags '-extldflags "-static"' -gcflags all=-trimpath=${GOPATH}/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE} -asmflags all=-trimpath=${GOPATH}/src/gitlab.cern.ch/${CI_PROJECT_NAMESPACE} -mod=vendor  cloudevents/receiver.go
-    - GOOS=linux GOARCH=amd64 go build -o build/bin/sender -ldflags '-extldflags "-static"' -mod=vendor cloudevents/sender.go
-    - GOOS=linux GOARCH=amd64 go build -o build/_output/bin/htc-operator -ldflags '-extldflags "-static"' -mod=vendor cmd/manager/main.go
+    - GOOS=linux GOARCH=amd64 go build -o build/bin/receiver -ldflags '-extldflags "-static"' cloudevents/receiver.go
+    - GOOS=linux GOARCH=amd64 go build -o build/bin/sender -ldflags '-extldflags "-static"' cloudevents/sender.go
+    - GOOS=linux GOARCH=amd64 go build -o build/_output/bin/htc-operator -ldflags '-extldflags "-static"' cmd/manager/main.go
   artifacts:
     paths:
       - build
