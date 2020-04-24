@@ -40,7 +40,7 @@ done
 # get the cluster config (in order to access Kubernetes cluster)
 openstack coe cluster show $CLUSTER_NAME
 openstack coe cluster config $CLUSTER_NAME
-export KUBECONFIG=config
+export KUBECONFIG=`pwd`/config
 # DNS configuration
 kubectl label node $A_NODE role=ingress
 export A_NODE=`kubectl get no|grep 'node-0'|awk '{print $1}'`
