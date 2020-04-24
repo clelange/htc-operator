@@ -78,13 +78,12 @@ test k8s:
     - kubectl create -f deploy/crds/htc.cern.ch_htcjobs_crd.yaml
     - kubectl create -f examples/retcode/zero.yaml
     - ./ci/wait-HTCJob.sh
+    - kubectl delete htcjob --all
 
 cleanup test clusters:
   stage: cleanup
   image: gitlab-registry.cern.ch/cloud/ciadm
   script:
-    - export KUBECONFIG=`pwd`/config
-    - kubectl delete htcjob --all
     - openstack coe cluster show ${CLUSTER_NAME}; if [ $? -eq 0 ]; then openstack coe cluster delete ${CLUSTER_NAME} || true; fi
     - sleep 5
     - while openstack coe cluster show ${CLUSTER_NAME}; [ $? -eq 0 ]; do sleep 3; done
