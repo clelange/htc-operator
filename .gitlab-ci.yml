@@ -68,6 +68,8 @@ test k8s:
   image: gitlab-registry.cern.ch/cloud/ciadm
   script:
 #    - ./ci/create-cluster.sh
+    - ls
+    - export KUBECONFIG=config
     - ./ci/k8s-setup.sh
     - cat ci/operator-template.yaml| sed "s/<HOSTNAME_HERE>/${CLUSTER_NAME}.cern.ch/"| kubectl create -f -
 
