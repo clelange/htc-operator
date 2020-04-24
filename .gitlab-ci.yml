@@ -68,9 +68,9 @@ test k8s:
   stage: test
   image: gitlab-registry.cern.ch/cloud/ciadm
   script:
-    - ./ci/create-cluster.sh
+    - source ci/create-cluster.sh
 #    - export KUBECONFIG=config
-    - ./ci/k8s-setup.sh
+    - source ci/k8s-setup.sh
     - cat deploy/operator.yaml| sed "s/cms-batch-test.cern.ch/${CLUSTER_NAME}.cern.ch/"| kubectl create -f -
     - kubectl create -f deploy/service_account.yaml
     - kubectl create -f deploy/role_binding.yaml
