@@ -43,7 +43,7 @@ openstack coe cluster show $CLUSTER_NAME
 openstack coe cluster config $CLUSTER_NAME
 export KUBECONFIG=`pwd`/config
 # DNS configuration
-kubectl label node $A_NODE role=ingress
 export A_NODE=`kubectl get no|grep 'node-0'|awk '{print $1}'`
+kubectl label node $A_NODE role=ingress
 openstack server set --property landb-alias=$CLUSTER_NAME--load-1- $A_NODE
 #sleep 1000
