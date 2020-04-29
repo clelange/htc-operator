@@ -21,12 +21,16 @@ type HTCJobSpec struct {
     // +optional
     Queue int `json:"queue"`
     Script ScriptSpec `json:"script"`
+    // +optional
+    HTCopts string `json:"htcopts"`
 }
 
 type HTCJobStatus struct {
+    UniqId int `json:"uniqid"`
     Active int `json:"active"`
     Succeeded int `json:"succeeded"`
     Failed int `json:"failed"`
+    // +optional
     JobId []string `json:"jobid"`
 }
 

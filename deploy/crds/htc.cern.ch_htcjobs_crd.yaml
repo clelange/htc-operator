@@ -32,6 +32,8 @@ spec:
           description: //    Spec   HTCJobSpec   `json:"spec,omitempty"` //    Status
             HTCJobStatus `json:"status,omitempty"`
           properties:
+            htcopts:
+              type: string
             name:
               type: string
             queue:
@@ -65,11 +67,13 @@ spec:
               type: array
             succeeded:
               type: integer
+            uniqid:
+              type: integer
           required:
           - active
           - failed
-          - jobid
           - succeeded
+          - uniqid
           type: object
       type: object
   version: v1alpha1

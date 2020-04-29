@@ -6,4 +6,5 @@ export _condor_SCHEDD_HOST="bigbird10.cern.ch"
 export _condor_CREDD_HOST="bigbird10.cern.ch"
 cp /usr/local/bin/sender .
 cat /mnt/kinit/password| kinit
+cat job.sub
 condor_submit -verbose -spool job.sub > condor_output.txt

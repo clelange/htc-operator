@@ -11,7 +11,7 @@ import (
     _ "github.com/mattn/go-sqlite3"
 )
 
-func recordSubmission(htcjobName string, tempDirName string) ([]string, error) {
+func recordSubmission(htcjobName string, tempDirName string, uniqid int) ([]string, error) {
     // get job id
     var clusterId, procId []string
 
@@ -50,12 +50,12 @@ func recordSubmission(htcjobName string, tempDirName string) ([]string, error) {
             return nil, err
         }
         defer db.Close()
-        stmt, err := db.Prepare(`INSERT INTO htcjobs VALUES (?, ?, ?, ?)`)
+        stmt, err := db.Prepare(`INSERT INTO htcjobs VALUES (?, ?, ?, ?, ?)`)
         if err != nil {
             fmt.Printf("Error while preparing a DB statement")
             return nil, err
         }
-        _, err = stmt.Exec(htcjobName, currentJobId, 1, tempDirName)
+        _, err = stmt.Exec(htcjobName, currentJobId, 1, tempDirName, uniqid)
         if err != nil {
             fmt.Printf("Error while inserting with a DB statement")
             return nil, err
@@ -84,4 +84,44 @@ func getJobStatus(htcjobName string, jobId string) (int, error) {
     }
     rows.Close()
     return status, nil
+}
+
+func rmJob(htcjobName string, jobId string) error {
+    db, err := sql.Open("sqlite3", "/data/sqlite/htcjobs.db")
+    if err != nil {
+        fmt.Printf("Error while deleting the job from the DB (connection)")
+        return err
+    }
+    defer db.Close()
+    stmt, err := db.Prepare(`DELETE FROM htcjobs WHERE jobid = ? AND htcjobname = ?`)
+    if err != nil {
+        fmt.Printf("Error while preparing a DB statement while removing")
+        return err
+    }
+    _, err = stmt.Exec(jobId, htcjobName)
+    if err != nil {
+        fmt.Printf("Error while deleting from DB")
+        return err
+    }
+    return nil
+}
+
+func clearJobs(htcjobName string, uniqId int) error {
+    db, err := sql.Open("sqlite3", "/data/sqlite/htcjobs.db")
+    if err != nil {
+        fmt.Printf("Error while deleting the job from the DB (connection) (clear)")
+        return err
+    }
+    defer db.Close()
+    stmt, err := db.Prepare(`DELETE FROM htcjobs WHERE uniqid = ? AND htcjobname = ?`)
+    if err != nil {
+        fmt.Printf("Error while preparing a DB statement while removing (clear)")
+        return err
+    }
+    _, err = stmt.Exec(uniqId, htcjobName)
+    if err != nil {
+        fmt.Printf("Error while deleting from DB( clear)")
+        return err
+    }
+    return nil
 }

@@ -6,6 +6,7 @@ import (
     "os/exec"
     "strings"
     "fmt"
+    "math/rand"
     htcv1alpha1 "gitlab.cern.ch/cms-cloud/htc-operator/pkg/apis/htc/v1alpha1"
 
     corev1 "k8s.io/api/core/v1"
@@ -109,7 +110,6 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
         return reconcile.Result{}, err
     }
     //// actions on delete (finalizer)
-
     // Add finalizer for this CR
     if !contains(instance.GetFinalizers(), htcjobFinalizer) {
         if err := r.addFinalizer(instance); err != nil {
@@ -123,6 +123,7 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
             // finalization logic fails, don't remove the finalizer so
             // that we can retry during the next reconciliation.
             if err := r.finalizeHTCJob(instance); err != nil {
+                fmt.Print("Failed to create finalizer")
                 return reconcile.Result{}, err
             }
             // Remove htcjobFinalizer. Once all finalizers have been
@@ -130,27 +131,41 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
             instance.SetFinalizers(remove(instance.GetFinalizers(), htcjobFinalizer))
             err := r.client.Update(context.TODO(), instance)
             if err != nil {
+                fmt.Print("Failed to set finalizer")
                 return reconcile.Result{}, err
             }
+            return reconcile.Result{}, nil
+        }
+    }
+    // generate unique Id
+    if instance.Status.UniqId == 0 {
+        instance.Status.UniqId = rand.Int()
+        instance.Status.JobId = make([]string, 0)
+        err := r.client.Status().Update(context.TODO(), instance)
+        if err != nil {
+            reqLogger.Error(err, "Failed to update HTCJob status (uniqid)")
+            return reconcile.Result{}, err
         }
     }
     // Check if the Job already exists
+    htcjobName := instance.Name
+    uniqId := instance.Status.UniqId
     if len(instance.Status.JobId) == 0 {
         // send the job and add an entry in the db
         // (after adding to active so many jobs dont get rescheduled)
         jobId, err := r.submitCondorJob(instance)
         if err != nil {
             reqLogger.Error(err, "Failed to send a job to HTCondor")
+            clearJobs(htcjobName, uniqId)
             return reconcile.Result{}, err
         }
         // record the jobId in Status
         instance.Status.JobId = jobId
         instance.Status.Active = len(jobId)
-        //instance.Status.JobId = make([]string, len(jobId))
-        //copy(instance.Status.JobId, jobId)
         err = r.client.Status().Update(context.TODO(), instance)
         if err != nil {
             reqLogger.Error(err, "Failed to update HTCJob status (Active)")
+            clearJobs(htcjobName, uniqId)
             return reconcile.Result{}, err
         }
         // Requeue to wait for the job to complete
@@ -161,7 +176,7 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
         for _, currentJobId := range instance.Status.JobId {
             jobStatus, err := getJobStatus(instance.Name, currentJobId)
             if err != nil {
-                reqLogger.Error(err, "Failed to get the status of an htcjob")
+                reqLogger.Error(err, "Failed to get the status of an htcjob (Waiting)")
                 return reconcile.Result{}, err
             }
             everyJobStatus = append(everyJobStatus, jobStatus)
@@ -183,6 +198,7 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
         err = r.client.Status().Update(context.TODO(), instance)
         if err != nil {
             reqLogger.Error(err, "Failed to update HTCJob status")
+            fmt.Println(instance)
             return reconcile.Result{}, err
         }
         if instance.Status.Active == 0 {
@@ -198,6 +214,10 @@ func (r *ReconcileHTCJob) finalizeHTCJob(v *htcv1alpha1.HTCJob) error {
     out, _ := exec.Command("rmCondor", strings.Join(v.Status.JobId, " ")).CombinedOutput()
     fmt.Println(strings.Join(v.Status.JobId, " "))
     fmt.Println(string(out))
+    // delete from sqlite
+    for _, jobId := range v.Status.JobId {
+        rmJob(v.Name, jobId)
+    }
     return nil
 }
 
