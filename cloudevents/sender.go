@@ -13,7 +13,8 @@ import (
 func main() {
 
     ctx := cloudevents.ContextWithTarget(context.Background(),
-        "http://cms-batch-test.cern.ch")
+        "http://cms-batch-test.cern.ch/cloudevents")
+//        "http://cms-batch-test.cern.ch")
 
     p, err := cloudevents.NewHTTP()
     if err != nil {

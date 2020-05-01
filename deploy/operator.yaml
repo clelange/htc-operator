@@ -85,7 +85,7 @@ spec:
   - host: cms-batch-test.cern.ch
     http:
       paths:
-      - path: /
+      - path: /cloudevents
         backend:
           serviceName: cloudevents-service
           servicePort: 80
