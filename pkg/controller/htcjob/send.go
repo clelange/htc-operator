@@ -27,10 +27,11 @@ func (r *ReconcileHTCJob) submitCondorJob(v *htcv1alpha1.HTCJob) ([]string, erro
         "       --bind /afs/cern.ch " +
         "       --bind /eos " +
         fmt.Sprintf(" docker://%s ", v.Spec.Script.Image) +
-        fmt.Sprintf(" %s ./script.sh\n", v.Spec.Script.Command) +
+        fmt.Sprintf(" %s ./script.sh $1\n", v.Spec.Script.Command) +
         "./sender $?\n" // send retcode too
     jobSubFile := "universe                = vanilla\n" +
         "executable              = job.sh\n" +
+        "arguments               = $(ProcId)\n" +
         "should_transfer_files   = Yes\n" +
         "when_to_transfer_output = ON_EXIT\n" +
         "output                  = out.$(ClusterId).$(ProcId)\n" +
