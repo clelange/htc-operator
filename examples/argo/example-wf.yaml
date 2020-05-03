@@ -1,0 +1,125 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: k8s-jobs-
+spec:
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: htcjob-argo-example-
+spec:
+  entrypoint: wf
+  volumeClaimTemplates:
+  - metadata:
+      name: vol-cephfs-h2t
+    spec:
+      accessModes:
+      - ReadWriteMany
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: csi-cephfs-h2t
+  volumes:
+  - name: eos
+    hostPath:
+      path: /var/eos
+  - name: kinit-secret-vol
+    secret:
+      secretName: kinit-secret
+  templates:
+  - name: wf
+    steps:
+    - - name: setup
+        template: setup
+    - - name: output-queue-no
+        template: output-queue-no
+    - - name: gen-jobs
+        template: gen-jobs
+        arguments:
+          parameters:
+          - name: queue
+            value: "{{steps.output-queue-no.outputs.parameters.qno}}"
+    - - name: combine
+        template: combine
+  - name: setup
+    script:
+      image: gitlab-registry.cern.ch/linuxsupport/cc7-base:latest
+      volumeMounts:
+      - mountPath: /data
+        name: vol-cephfs-h2t
+      - mountPath: /eos
+        name: eos
+        mountPropagation: HostToContainer
+      - mountPath: /mnt/kinit
+        name: kinit-secret-vol
+      command: ["bash"]
+      source: |
+        USER=`cat /mnt/kinit/username` &&
+        FL=`echo $USER|cut -b 1` &&
+        useradd $USER &&
+        EOSDIR=/eos/user/$FL/$USER &&
+        runuser -l $USER -c "cat /mnt/kinit/password| kinit && \
+          rm -rf $EOSDIR/argo-example && \
+          rm -rf $EOSDIR/argo-example-res.txt && \
+          mkdir $EOSDIR/argo-example"
+  - name: output-queue-no
+    script:
+      image: busybox
+      command: [sh]
+      source: echo 5 > /tmp/qno.txt
+    outputs:
+      parameters:
+      - name: qno
+        valueFrom:
+          path: /tmp/qno.txt
+  - name: gen-jobs
+    inputs:
+      parameters:
+      - name: queue
+    resource:
+      action: create
+      successCondition: status.succeeded == {{inputs.parameters.queue}}
+      failureCondition: status.failed > 0
+      manifest: |
+        apiVersion: htc.cern.ch/v1alpha1
+        kind: HTCJob
+        metadata:
+          generateName: arghtcj-
+          ownerReferences:
+          - apiVersion: argoproj.io/v1alpha1
+            blockOwnerDeletion: true
+            kind: Workflow
+            name: "{{workflow.name}}"
+            uid: "{{workflow.uid}}"
+        spec:
+          name: xmpl-img
+          queue: {{inputs.parameters.queue}}
+          script:
+            image: xkxgygmoqkguuddnkz/root1804
+            command: bash
+            source: |
+              USER=`whoami` &&
+              FL=`echo $USER|cut -b 1` &&
+              hostname > /eos/user/$FL/$USER/argo-example/res-$1.txt
+          htcopts: |
+            +JobFlavour = "espresso"
+            +MaxRuntime = 10
+  - name: combine
+    script:
+      image: gitlab-registry.cern.ch/linuxsupport/cc7-base:latest
+      volumeMounts:
+      - mountPath: /data
+        name: vol-cephfs-h2t
+      - mountPath: /eos
+        name: eos
+        mountPropagation: HostToContainer
+      - mountPath: /mnt/kinit
+        name: kinit-secret-vol
+      command: ["bash"]
+      source: |
+        USER=`cat /mnt/kinit/username` &&
+        FL=`echo $USER|cut -b 1` &&
+        useradd $USER &&
+        EOSDIR=/eos/user/$FL/$USER &&
+        runuser -l $USER -c "cat /mnt/kinit/password| kinit && \
+          cat $EOSDIR/argo-example/* > $EOSDIR/argo-example-res.txt"

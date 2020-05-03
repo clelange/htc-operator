@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: argo-ingress
+  namespace: argo
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.frontend.entryPoints: "http"
+spec:
+  rules:
+  - host: cms-batch-test.cern.ch
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: argo-server
+          servicePort: 2746
