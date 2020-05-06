@@ -159,6 +159,7 @@ taken from the HTCJob spec:
 - `.spec.script.command`: command to be run in the container
 - `.spec.script.source`: contents of a script file that is given as an argument to `.spec.script.command'
 - `.spec.script.queue`: optional, specify the number of jobs to be sent. The job number in the sequence is an argument to the script
+- `.spec.htcopts`: additional option to add to the htcondor submission file
 
 
 After the job is submitted, its `.status` field gets populated:
