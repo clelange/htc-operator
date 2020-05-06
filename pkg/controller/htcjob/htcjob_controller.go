@@ -149,6 +149,7 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
     }
     // Check if the Job already exists
     htcjobName := instance.Name
+    // uniqid makes cleanup easier in case of failure or in the finalizer
     uniqId := instance.Status.UniqId
     if len(instance.Status.JobId) == 0 {
         // send the job and add an entry in the db
