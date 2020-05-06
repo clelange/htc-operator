@@ -159,6 +159,7 @@ taken from the HTCJob spec:
 - `.spec.script.command`: command to be run in the container
 - `.spec.script.source`: contents of a script file that is given as an argument to `.spec.script.command'
 - `.spec.script.queue`: optional, specify the number of jobs to be sent. The job number in the sequence is an argument to the script
+- `.spec.htcopts`: additional options to add to the htcondor submission file
 
 
 After the job is submitted, its `.status` field gets populated:
@@ -233,6 +234,11 @@ The jobs are submitted with `condor_submit -spool`, since the `-spool` option al
 manual retrieval of logs of the completed job. In order to get these logs, `condor_transfer_data`
 can be used. However, the data can only be transferred to the same directory from which the job was submitted.
 The directory name is saved in the database and also is outputted by `condor_transfer_data` in case of error.
+
+# Finalizer
+
+As soon as an HTCJob resource is created, a finalizer is attached to it, which ensures that when the resource
+is deleted, the job that is assiociated with it is also deleted from the HTCondor queue.
 
 # Resources used
 
