@@ -235,6 +235,11 @@ manual retrieval of logs of the completed job. In order to get these logs, `cond
 can be used. However, the data can only be transferred to the same directory from which the job was submitted.
 The directory name is saved in the database and also is outputted by `condor_transfer_data` in case of error.
 
+# Finalizer
+
+As soon as an HTCJob resource is created, a finalizer is attached to it, which ensures that when the resource
+is deleted, the job that is assiociated with it is also deleted from the HTCondor queue.
+
 # Resources used
 
 Openshift tutorial for operator-sdk:
