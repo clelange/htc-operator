@@ -238,7 +238,7 @@ The directory name is saved in the database and also is outputted by `condor_tra
 # Finalizer
 
 As soon as an HTCJob resource is created, a finalizer is attached to it, which ensures that when the resource
-is deleted, the job that is assiociated with it is also deleted from the HTCondor queue.
+is deleted, the job that is assiociated with it is also deleted from the HTCondor queue. More info [here](https://sdk.operatorframework.io/docs/golang/quickstart/#handle-cleanup-on-deletion)
 
 # Resources used
 
