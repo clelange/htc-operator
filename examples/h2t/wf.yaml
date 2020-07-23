@@ -1,11 +1,6 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: k8s-jobs-
-spec:
-apiVersion: argoproj.io/v1alpha1
-kind: Workflow
-metadata:
   generateName: no-htcjob-argo-example-
 spec:
   entrypoint: wf
@@ -66,7 +61,7 @@ spec:
         sh download.sh samples/
   - name: skim
     script:
-      image: xkxgygmoqkguuddnkz/root1804 
+      image: xkxgygmoqkguuddnkz/root1804
       volumeMounts:
       - mountPath: /data
         name: vol-cephfs-h2t
