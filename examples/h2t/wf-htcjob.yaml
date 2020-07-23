@@ -1,11 +1,6 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: k8s-jobs-
-spec:
-apiVersion: argoproj.io/v1alpha1
-kind: Workflow
-metadata:
   generateName: htcjob-argo-example-
 spec:
   entrypoint: wf
@@ -23,9 +18,9 @@ spec:
   - name: eos
     hostPath:
       path: /var/eos
-  - name: kinit-secret-vol
+  - name: keytab-secret-vol
     secret:
-      secretName: kinit-secret
+      secretName: kerberos-keytab-secret
   templates:
   - name: wf
     steps:
@@ -84,14 +79,20 @@ spec:
       - mountPath: /eos
         name: eos
         mountPropagation: HostToContainer
-      - mountPath: /mnt/kinit
-        name: kinit-secret-vol
+      - name: keytab-secret-vol
+        mountPath: "/secret/keytabvol"
+      env:
+      - name: KRBUSER  # name of env var
+        valueFrom:
+          secretKeyRef:
+            name: kerberos-keytab-secret     # name of an existing k8s secret
+            key: user     # 'key' subcomponent of the secret
       command: [bash]
       source: |
-        USER=`cat /mnt/kinit/username` &&
+        USER=$(cat /secret/keytabvol/user | awk -F '@' '{print $1}') &&
         FL=`echo $USER|cut -b 1`
         useradd $USER && su - $USER << EOF
-        cat /mnt/kinit/password|kinit &&
+        kinit -kt /secret/keytabvol/keytab ${KRBUSER} &&
         rm -rf /eos/user/$FL/$USER/payload/ &&
         cp -r /data/payload /eos/user/$FL/$USER/
         EOF
@@ -132,15 +133,22 @@ spec:
       - mountPath: /eos
         name: eos
         mountPropagation: HostToContainer
-      - mountPath: /mnt/kinit
-        name: kinit-secret-vol
+      - name: keytab-secret-vol
+        mountPath: "/secret/keytabvol"
+      env:
+      - name: KRBUSER  # name of env var
+        valueFrom:
+          secretKeyRef:
+            name: kerberos-keytab-secret
+            key: user
       command: ["bash"]
       source: |
-        USER=`cat /mnt/kinit/username` &&
+        USER=$(echo "$KRBUSER" | awk -F '@' '{print $1}') &&
         FL=`echo $USER|cut -b 1`
         useradd $USER &&
-        runuser -l $USER -c "cat /mnt/kinit/password|kinit && \
-          cp -r /eos/user/$FL/$USER/payload/skims /tmp" &&
+        runuser -l $USER -c \
+          "kinit -kt /secret/keytabvol/keytab ${KRBUSER} && \
+        cp -r /eos/user/$FL/$USER/payload/skims /tmp" &&
         cp -r /tmp/skims /data/payload/
   - name: hist
     script:

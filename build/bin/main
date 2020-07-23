@@ -1,14 +1,14 @@
 #!/bin/bash
 set -x
-USER_NAME=`cat /mnt/kinit/username` || exit
+USER_NAME=$(cat /secret/keytabvol/user | awk -F '@' '{print $1}') || exit
 OPERATOR=$OPERATOR_NAME || exit
 USER_UID=1001 || exit
-useradd $USER_NAME
+useradd "${USER_NAME}"
 sed -i.old "/^$USER_NAME.*$/d" /etc/passwd
 echo "${USER_NAME}:x:${USER_UID}:123:${USER_NAME} user:${HOME}:/bin/bash" >> /etc/passwd
-mkdir -p ${HOME}
+mkdir -p "${HOME}"
 chown ${USER_UID}:0 ${HOME}
-chmod ug+rwx ${HOME}
-su $USER_NAME -c "ensureDB"
-su $USER_NAME -c "receiver &"
-su $USER_NAME -c "/htc-operator"
+chmod ug+rwx "${HOME}"
+su "$USER_NAME" -c "ensureDB"
+su "$USER_NAME" -c "receiver &"
+su "$USER_NAME" -c "/htc-operator"

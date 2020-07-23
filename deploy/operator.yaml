@@ -35,8 +35,8 @@ spec:
           args: [main]
           imagePullPolicy: Always
           volumeMounts:
-          - mountPath: /mnt/kinit
-            name: kinit-secret-vol
+          - mountPath: /secret/keytabvol
+            name: keytab-secret-vol
           - mountPath: /data
             name: vol-cephfs-cms
           env:
@@ -55,9 +55,9 @@ spec:
         persistentVolumeClaim:
           claimName: pvc-cephfs-cms
           readOnly: false
-      - name: kinit-secret-vol
+      - name: keytab-secret-vol
         secret:
-          secretName: kinit-secret
+          secretName: kerberos-keytab-secret
 ---
 apiVersion: v1
 kind: Service

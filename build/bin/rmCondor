@@ -1,8 +1,10 @@
 #!/bin/bash
 
 set -x
-export USER=`cat /mnt/kinit/username`
+KRBUSER=$(cat /secret/keytabvol/user)
+USER=$(echo "$KRBUSER" | awk -F '@' '{print $1}')
+export USER
 export _condor_SCHEDD_HOST="bigbird10.cern.ch"
 export _condor_CREDD_HOST="bigbird10.cern.ch"
-cat /mnt/kinit/password| kinit
+kinit -kt /secret/keytabvol/keytab "${KRBUSER}"
 condor_rm $@
