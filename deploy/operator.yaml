@@ -82,7 +82,7 @@ metadata:
     traefik.frontend.entryPoints: "http"
 spec:
   rules:
-  - host: cms-batch-test.cern.ch
+  - host: cms-batch.cern.ch
     http:
       paths:
       - path: /cloudevents
