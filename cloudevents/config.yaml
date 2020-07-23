@@ -14,19 +14,28 @@ spec:
       labels:
         app: cloudevents-loadbalance
     spec:
+      volumes:
+      - name: s3-cred-vol
+        secret:
+          secretName: s3-cred
       containers:
       - name: pi
         image: centos
         command: ["sh", "-c"]
         args: ["
           yum -y install python3 &&
+          ACCESS_KEY=$(cat /mnt/s3-cred/accessKey) &&
+          SECRET_KEY=$(cat /mnt/s3-cred/secretKey) &&
           pip3 install s3cmd &&
-          echo 'host_base = s3.cern.ch\nhost_bucket = %(bucket)s.s3.cern.ch\naccess_key = PJE22MGQ8QO45CKI496K\nsecret_key = 8BnRJcxuOain8fLBxT44IfFMNgku7huHoo8mK8NP\nuse_https = True' > ~/.s3cfg &&
+          echo \"host_base = s3.cern.ch\nhost_bucket = %(bucket)s.s3.cern.ch\naccess_key = ${ACCESS_KEY}\nsecret_key = ${SECRET_KEY}\nuse_https = True\" > ~/.s3cfg &&
           s3cmd get s3://TADO_BUCKET/receiver &&
           chmod +x receiver && ./receiver
           "]
         ports:
         - containerPort: 80
+        volumeMounts:
+        - name: s3-cred-vol
+          mountPath: /mnt/s3-cred
 ---
 apiVersion: v1
 kind: Service
