@@ -26,11 +26,11 @@ build_go_binary:
     - go mod download
     - echo 'Building static go binary ...'
     - sed -i "s/cms-batch-test/$CLUSTER_NAME/g" cloudevents/sender.go
-    - GOOS=linux GOARCH=amd64 go build -o build/bin/receiver -ldflags \
+    - GOOS=linux GOARCH=amd64 go build -o build/bin/receiver -ldflags
       '-extldflags "-static"' cloudevents/receiver.go
-    - GOOS=linux GOARCH=amd64 go build -o build/bin/sender -ldflags \
+    - GOOS=linux GOARCH=amd64 go build -o build/bin/sender -ldflags
       '-extldflags "-static"' cloudevents/sender.go
-    - GOOS=linux GOARCH=amd64 go build -o build/_output/bin/htc-operator \
+    - GOOS=linux GOARCH=amd64 go build -o build/_output/bin/htc-operator
       -ldflags '-extldflags "-static"' cmd/manager/main.go
   artifacts:
     paths:
@@ -58,14 +58,14 @@ build_operator:
         exit 1
       fi
     # Prepare Kaniko configuration file:
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\", \
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",
       \"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
     # Build and push the image from the Dockerfile at the root of the project.
     # To push to a specific docker tag, amend the --destination parameter, e.g. --destination $CI_REGISTRY_IMAGE:$CI_BUILD_REF_NAME
     # See https://docs.gitlab.com/ee/ci/variables/predefined_variables.html#variables-reference for available variables
-    - /kaniko/executor --context "$CONTEXT" --dockerfile "$CONTEXT/$DOCKERFILE_PATH" \
+    - /kaniko/executor --context "$CONTEXT" --dockerfile "$CONTEXT/$DOCKERFILE_PATH"
       --destination "$CI_REGISTRY_IMAGE:$TAG" \
-      --build-arg CI_PROJECT_NAMESPACE="${CI_PROJECT_NAMESPACE}" \
+      --build-arg CI_PROJECT_NAMESPACE="${CI_PROJECT_NAMESPACE}"
       --build-arg CI_PROJECT_NAME="${CI_PROJECT_NAME}"
   variables:
     DOCKERFILE_PATH: build/Dockerfile
@@ -78,7 +78,7 @@ test k8s:
     - source ci/create-cluster.sh
 #    - export KUBECONFIG=config
     - source ci/k8s-setup.sh
-    - cat deploy/operator.yaml| sed "s/cms-batch-test.cern.ch/${CLUSTER_NAME}.cern.ch/"| \
+    - cat deploy/operator.yaml| sed "s/cms-batch-test.cern.ch/${CLUSTER_NAME}.cern.ch/"|
       kubectl create -f -
     - kubectl create -f deploy/service_account.yaml
     - kubectl create -f deploy/role_binding.yaml
@@ -92,10 +92,10 @@ cleanup test clusters:
   stage: cleanup
   image: gitlab-registry.cern.ch/cloud/ciadm
   script:
-    - openstack coe cluster show ${CLUSTER_NAME}; \
+    - openstack coe cluster show ${CLUSTER_NAME};
       if [ $? -eq 0 ]; then \
       openstack coe cluster delete ${CLUSTER_NAME} || true; fi
     - sleep 5
-    - while openstack coe cluster show ${CLUSTER_NAME}; \
+    - while openstack coe cluster show ${CLUSTER_NAME};
       [ $? -eq 0 ]; do sleep 3; done
   when: always
