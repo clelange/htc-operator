@@ -25,6 +25,7 @@ func (r *ReconcileHTCJob) submitCondorJob(v *htcv1alpha1.HTCJob) ([]string, erro
 		"export SINGULARITY_CACHEDIR=\"/tmp/$(whoami)/singularity\"\n" +
 		"pwd\n" +
 		"ls\n" +
+		"echo $1\n" +
 		"cat script.sh\n" +
 		"singularity exec" +
 		" --bind /cvmfs" +
