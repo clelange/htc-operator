@@ -77,12 +77,12 @@ func getJobStatus(htcjobName string, jobID string) (int, error) {
 		fmt.Printf("Error while preparing a DB statement")
 		return 0, err
 	}
+	defer rows.Close()
 	rows.Next()
 	err = rows.Scan(&status)
 	if err != nil {
 		return 0, err
 	}
-	rows.Close()
 	return status, nil
 }
 
