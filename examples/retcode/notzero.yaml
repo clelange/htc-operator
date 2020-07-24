@@ -5,7 +5,7 @@ metadata:
 spec:
   name: notzero
   script:
-    image: centos
+    image: gitlab-registry.cern.ch/cms-cloud/cmssw-docker/cc7-cms:latest
     command: bash
     source: |
       commandt-that-doesnt-exist

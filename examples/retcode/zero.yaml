@@ -5,7 +5,7 @@ metadata:
 spec:
   name: zero
   script:
-    image: centos
+    image: gitlab-registry.cern.ch/cms-cloud/cmssw-docker/cc7-cms:latest
     command: bash
     source: |
-      echo "A"
+      echo "Executing this command inside the container!"
