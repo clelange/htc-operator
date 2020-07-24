@@ -23,10 +23,13 @@ func (r *ReconcileHTCJob) submitCondorJob(v *htcv1alpha1.HTCJob) ([]string, erro
 	}
 	jobShellScript := "#!/bin/bash\n" +
 		"export SINGULARITY_CACHEDIR=\"/tmp/$(whoami)/singularity\"\n" +
-		"singularity exec " +
-		"       --bind /cvmfs " +
-		"       --bind /afs/cern.ch " +
-		"       --bind /eos " +
+		"pwd\n" +
+		"ls\n" +
+		"cat script.sh\n" +
+		"singularity exec" +
+		" --bind /cvmfs" +
+		" --bind /afs/cern.ch" +
+		" --bind /eos" +
 		fmt.Sprintf(" docker://%s ", v.Spec.Script.Image) +
 		fmt.Sprintf(" %s ./script.sh $1\n", v.Spec.Script.Command) +
 		"./sender $?\n" // send retcode too
