@@ -25,7 +25,7 @@ build_go_binary:
     - export GO111MODULE=on
     - go mod download
     - echo 'Building static go binary ...'
-    - sed -i "s/cms-batch/$CLUSTER_NAME/g" cloudevents/sender.go
+    # - sed -i "s/cms-batch/$CLUSTER_NAME/g" cloudevents/sender.go
     - GOOS=linux GOARCH=amd64 go build -o build/bin/receiver -ldflags
       '-extldflags "-static"' cloudevents/receiver.go
     - GOOS=linux GOARCH=amd64 go build -o build/bin/sender -ldflags
