@@ -1,10 +1,9 @@
 #!/bin/bash
 
-cd $1
+cd "$1" || exit
 KRBUSER=$(cat /secret/keytabvol/user)
-export USER=`whoami`
-# export _condor_SCHEDD_HOST="bigbird10.cern.ch"
-# export _condor_CREDD_HOST="bigbird10.cern.ch"
+USER=$(whoami)
+export USER
 cp /usr/local/bin/sender .
 kinit -kt /secret/keytabvol/keytab "${KRBUSER}"
 myschedd show

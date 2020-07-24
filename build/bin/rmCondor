@@ -8,4 +8,4 @@ export USER
 # export _condor_CREDD_HOST="bigbird10.cern.ch"
 kinit -kt /secret/keytabvol/keytab "${KRBUSER}"
 myschedd show
-condor_rm $@
+condor_rm "$@"
