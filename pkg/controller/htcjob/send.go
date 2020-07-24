@@ -17,9 +17,9 @@ func (r *ReconcileHTCJob) submitCondorJob(v *htcv1alpha1.HTCJob) ([]string, erro
 	tdName, err := ioutil.TempDir(os.TempDir(), "scratch-")
 	// create the tempdir
 	err = os.MkdirAll(tdName, 0777)
-	queue_no := 1
+	queueNo := 1
 	if v.Spec.Queue != 0 {
-		queue_no = v.Spec.Queue
+		queueNo = v.Spec.Queue
 	}
 	jobShellScript := "#!/bin/bash\n" +
 		"singularity exec " +
@@ -41,7 +41,7 @@ func (r *ReconcileHTCJob) submitCondorJob(v *htcv1alpha1.HTCJob) ([]string, erro
 		"transfer_input_files    = script.sh, /usr/local/bin/sender\n" +
 		fmt.Sprintf("environment = \"JOB_NAME=%s TEMP_DIR=%s\"\n", v.Name, tdName) +
 		fmt.Sprintf("\n%s\n", v.Spec.HTCopts) +
-		fmt.Sprintf("queue %d\n", queue_no)
+		fmt.Sprintf("queue %d\n", queueNo)
 	// submit the job to HTC
 	// write files
 	errmsg, err := sendJob(v.Spec.Script.Source, jobShellScript, jobSubFile, tdName)
@@ -50,12 +50,12 @@ func (r *ReconcileHTCJob) submitCondorJob(v *htcv1alpha1.HTCJob) ([]string, erro
 		return nil, err
 	}
 	// record the submission in a database
-	jobId, err := recordSubmission(v.Name, tdName, v.Status.UniqId)
+	jobID, err := recordSubmission(v.Name, tdName, v.Status.UniqId)
 	if err != nil {
 		fmt.Print("Failed to record the fact of submission in the DB")
 		return nil, err
 	}
-	return jobId, nil
+	return jobID, nil
 }
 
 func sendJob(script string, jobShellScript string, jobSubFile string,
