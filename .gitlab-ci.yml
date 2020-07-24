@@ -74,6 +74,7 @@ build_operator:
 test k8s:
   stage: test
   image: gitlab-registry.cern.ch/cloud/ciadm
+  allow_failure: true
   script:
     - source ci/create-cluster.sh
 #    - export KUBECONFIG=config
@@ -90,6 +91,7 @@ test k8s:
 
 cleanup test clusters:
   stage: cleanup
+  allow_failure: true
   image: gitlab-registry.cern.ch/cloud/ciadm
   script:
     - openstack coe cluster show ${CLUSTER_NAME};
