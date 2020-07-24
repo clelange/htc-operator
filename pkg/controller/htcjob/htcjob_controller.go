@@ -171,7 +171,7 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
 			return reconcile.Result{}, err
 		}
 		// Requeue to wait for the job to complete
-		return reconcile.Result{RequeueAfter: time.Second * 10}, nil
+		return reconcile.Result{RequeueAfter: time.Second * 30}, nil
 	}
 	// a job is active => check if it's marked as running in the database
 	var everyJobStatus []int
@@ -204,9 +204,9 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
 		return reconcile.Result{}, err
 	}
 	if instance.Status.Active == 0 {
-		return reconcile.Result{RequeueAfter: time.Second * 10}, nil
+		return reconcile.Result{RequeueAfter: time.Second * 30}, nil
 	}
-	return reconcile.Result{RequeueAfter: time.Second * 10}, nil
+	return reconcile.Result{RequeueAfter: time.Second * 30}, nil
 }
 
 func (r *ReconcileHTCJob) finalizeHTCJob(v *htcv1alpha1.HTCJob) error {
