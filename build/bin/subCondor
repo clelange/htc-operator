@@ -9,4 +9,5 @@ cp /usr/local/bin/sender .
 kinit -kt /secret/keytabvol/keytab "${KRBUSER}"
 myschedd show
 cat job.sub
+echo "Submitting job to HTCondor"
 condor_submit -verbose -spool job.sub > condor_output.txt
