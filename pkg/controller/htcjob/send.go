@@ -14,7 +14,7 @@ import (
 )
 
 func (r *ReconcileHTCJob) submitCondorJob(v *htcv1alpha1.HTCJob) ([]string, error) {
-	tdName, err := ioutil.TempDir(os.TempDir(), "scratch-")
+	tdName, err := ioutil.TempDir("/data/tmp_jobs", "scratch-")
 	// create the tempdir
 	err = os.MkdirAll(tdName, 0777)
 	queueNo := 1
@@ -31,7 +31,8 @@ func (r *ReconcileHTCJob) submitCondorJob(v *htcv1alpha1.HTCJob) ([]string, erro
 		"./sender $?\n" // send retcode too
 	jobSubFile := "universe                = vanilla\n" +
 		"executable              = job.sh\n" +
-		"+MaxRuntime = 600\n" +
+		"+MaxRuntime = 1200\n" +
+		"+AccountingGroup = \"group_u_CMST3.all\"\n" +
 		"arguments               = $(ProcId)\n" +
 		"should_transfer_files   = Yes\n" +
 		"when_to_transfer_output = ON_EXIT\n" +
