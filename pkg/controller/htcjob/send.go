@@ -29,10 +29,11 @@ func (r *ReconcileHTCJob) submitCondorJob(v *htcv1alpha1.HTCJob) ([]string, erro
 		"cat script.sh\n" +
 		"singularity exec" +
 		" --bind /cvmfs" +
-		" --bind /afs/cern.ch" +
+		" --bind /afs" +
 		" --bind /eos" +
+		" --bind $PWD:/htc_run" +
 		fmt.Sprintf(" docker://%s ", v.Spec.Script.Image) +
-		fmt.Sprintf(" %s ./script.sh $1\n", v.Spec.Script.Command) +
+		fmt.Sprintf(" %s /htc_run/script.sh $1\n", v.Spec.Script.Command) +
 		"./sender $?\n" // send retcode too
 	jobSubFile := "universe                = vanilla\n" +
 		"executable              = job.sh\n" +
