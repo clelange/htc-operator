@@ -22,6 +22,7 @@ func (r *ReconcileHTCJob) submitCondorJob(v *htcv1alpha1.HTCJob) ([]string, erro
 		queueNo = v.Spec.Queue
 	}
 	jobShellScript := "#!/bin/bash\n" +
+		"export SINGULARITY_CACHEDIR=\"/tmp/$(whoami)/singularity\"\n" +
 		"singularity exec " +
 		"       --bind /cvmfs " +
 		"       --bind /afs/cern.ch " +
