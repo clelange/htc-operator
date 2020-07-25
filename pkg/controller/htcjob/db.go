@@ -64,6 +64,26 @@ func recordSubmission(htcjobName string, tempDirName string, uniqid int) ([]stri
 	return jobID, nil
 }
 
+func updateJobStatus(htcjobName string, jobID string, newStatus int) error {
+
+	db, err := sql.Open("sqlite3", "/data/sqlite/htcjobs.db")
+	if err != nil {
+		return fmt.Errorf("Error while inserting the job into DB: %v", err)
+	}
+	defer db.Close()
+
+	fmt.Printf("updateJobStatus for htcjobName: %s, jobID: %s, newStatus: %d\n", htcjobName, jobID, newStatus)
+	stmt, err := db.Prepare(`UPDATE htcjobs SET status=$1 WHERE htcjobName=$2 AND jobId=$3`)
+	if err != nil {
+		return fmt.Errorf("Error while creating DB statement (updateJobStatus): %v", err)
+	}
+	_, err = stmt.Exec(newStatus, htcjobName, jobID)
+	if err != nil {
+		return fmt.Errorf("Error while executing DB statement (updateJobStatus): %v", err)
+	}
+	return nil
+}
+
 func getJobStatus(htcjobName string, jobID string) (int, error) {
 	var status int
 	db, err := sql.Open("sqlite3", "/data/sqlite/htcjobs.db")
@@ -84,6 +104,28 @@ func getJobStatus(htcjobName string, jobID string) (int, error) {
 		return 0, err
 	}
 	return status, nil
+}
+
+func getJobTempDir(htcjobName string, jobID string) (string, error) {
+	tempDirName := ""
+	db, err := sql.Open("sqlite3", "/data/sqlite/htcjobs.db")
+	if err != nil {
+		return tempDirName, err
+	}
+	defer db.Close()
+	rows, err := db.Query(`SELECT tempDir FROM htcjobs WHERE htcjobName=? AND jobId=?`,
+		htcjobName, jobID)
+	if err != nil {
+		fmt.Printf("Error while preparing a DB statement")
+		return "", err
+	}
+	defer rows.Close()
+	rows.Next()
+	err = rows.Scan(&tempDirName)
+	if err != nil {
+		return tempDirName, err
+	}
+	return tempDirName, nil
 }
 
 func rmJob(htcjobName string, jobID string) error {
