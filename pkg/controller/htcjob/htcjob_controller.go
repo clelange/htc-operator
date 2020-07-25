@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -194,10 +195,13 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
 		case 4:
 			instance.Status.Succeeded++
 			r.transferCondorJob(instance.Status.JobId[i])
+			// Update job status adding 10
+			updateJobStatus(instance.Name, instance.Status.JobId[i], s+10)
 		case 7:
 			instance.Status.Failed++
 			// For now, also transfer output in case of failed job
 			r.transferCondorJob(instance.Status.JobId[i])
+			updateJobStatus(instance.Name, instance.Status.JobId[i], s+10)
 		}
 	}
 	err = r.client.Status().Update(context.TODO(), instance)
@@ -207,6 +211,27 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
 		return reconcile.Result{}, err
 	}
 	if instance.Status.Active == 0 {
+		// If all jobs are done, copy output
+		copyOutput := true
+		for _, s := range everyJobStatus {
+			if s < 14 || s > 20 {
+				copyOutput = false
+				break
+			}
+		}
+		if copyOutput {
+			tempDir, err := getJobTempDir(instance.Name, instance.Status.JobId[0])
+			if err != nil {
+				fmt.Printf("Error getting job temporary directory: %v\n", err)
+			} else {
+				outDir := fmt.Sprintf("/data/htc_out/%s", instance.Name)
+				err = CopyDir(tempDir, outDir)
+				if err != nil {
+					fmt.Printf("Failed to copy job output from temporary directory: %v\n", err)
+				}
+				updateJobStatus(instance.Name, instance.Status.JobId[0], everyJobStatus[0]+10)
+			}
+		}
 		return reconcile.Result{RequeueAfter: time.Second * 30}, nil
 	}
 	return reconcile.Result{RequeueAfter: time.Second * 30}, nil
@@ -217,6 +242,17 @@ func (r *ReconcileHTCJob) finalizeHTCJob(v *htcv1alpha1.HTCJob) error {
 	out, _ := exec.Command("rmCondor", strings.Join(v.Status.JobId, " ")).CombinedOutput()
 	fmt.Println(strings.Join(v.Status.JobId, " "))
 	fmt.Println(string(out))
+	if len(v.Status.JobId) > 0 {
+		tempDir, err := getJobTempDir(v.Name, v.Status.JobId[0])
+		if err != nil {
+			fmt.Printf("Error getting job temporary directory: %v\n", err)
+		} else {
+			err = os.RemoveAll(tempDir)
+			if err != nil {
+				fmt.Printf("Failed to delete temporary directory: %v\n", err)
+			}
+		}
+	}
 	// delete from sqlite
 	for _, jobID := range v.Status.JobId {
 		rmJob(v.Name, jobID)
