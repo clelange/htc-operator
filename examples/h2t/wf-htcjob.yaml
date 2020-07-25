@@ -13,7 +13,7 @@ spec:
       resources:
         requests:
           storage: 10Gi
-      storageClassName: csi-cephfs-h2t
+      storageClassName: csi-cephfs-storageclass
   volumes:
   - name: eos
     hostPath:
@@ -44,37 +44,39 @@ spec:
     script:
       image: alpine
       volumeMounts:
-      - mountPath: /data
+      - mountPath: /data/
         name: vol-cephfs-h2t
       command: [sh]
-      source: rm -rf /data/payload
+      source: |
+        rm -rf /data/ht2/payload &&
+        mkdir -p /data/ht2/
   - name: unzip
     script:
       image: kubeless/unzip
       volumeMounts:
-      - mountPath: /data
+      - mountPath: /data/
         name: vol-cephfs-h2t
       command: [bash]
       source: |
         curl -OL https://github.com/awesome-workshop/payload/archive/master.zip &&
         unzip master.zip &&
-        mv payload-master /data/payload
+        mv payload-master /data/ht2/payload
   - name: dl-samples
     script:
       image: xkxgygmoqkguuddnkz/root1804
       volumeMounts:
-      - mountPath: /data
+      - mountPath: /data/
         name: vol-cephfs-h2t
       command: [sh]
       source: |
-        cd data/payload/ &&
+        cd /data/ht2/payload/ &&
         mkdir samples &&
         sh download.sh samples/
   - name: ceph2eos
     script:
       image: gitlab-registry.cern.ch/linuxsupport/cc7-base:latest
       volumeMounts:
-      - mountPath: /data
+      - mountPath: /data/
         name: vol-cephfs-h2t
       - mountPath: /eos
         name: eos
@@ -94,7 +96,7 @@ spec:
         useradd $USER && su - $USER << EOF
         kinit -kt /secret/keytabvol/keytab ${KRBUSER} &&
         rm -rf /eos/user/$FL/$USER/payload/ &&
-        cp -r /data/payload /eos/user/$FL/$USER/
+        cp -r /data/ht2/payload /eos/user/$FL/$USER/
         EOF
   - name: skim
     resource:
@@ -128,7 +130,7 @@ spec:
     script:
       image: gitlab-registry.cern.ch/linuxsupport/cc7-base:latest
       volumeMounts:
-      - mountPath: /data
+      - mountPath: /data/
         name: vol-cephfs-h2t
       - mountPath: /eos
         name: eos
@@ -149,26 +151,26 @@ spec:
         runuser -l $USER -c \
           "kinit -kt /secret/keytabvol/keytab ${KRBUSER} && \
         cp -r /eos/user/$FL/$USER/payload/skims /tmp" &&
-        cp -r /tmp/skims /data/payload/
+        cp -r /tmp/skims /data/ht2/payload/
   - name: hist
     script:
       image: xkxgygmoqkguuddnkz/root1804 # 'rootproject/root-conda:6.18.04' has root v20.00, had to make my own img
       volumeMounts:
-      - mountPath: /data
+      - mountPath: /data/
         name: vol-cephfs-h2t
       command: [bash]
       source: |
-        cd /data/payload/ &&
+        cd /data/ht2/payload/ &&
         mkdir histograms &&
         bash histograms.sh skims/ histograms/
   - name: plot
     script:
       image: xkxgygmoqkguuddnkz/root1804 # 'rootproject/root-conda:6.18.04' has root v20.00, had to make my own img
       volumeMounts:
-      - mountPath: /data
+      - mountPath: /data/
         name: vol-cephfs-h2t
       command: [bash]
       source: |
-        cd /data/payload/ &&
+        cd /data/ht2/payload/ &&
         mkdir plots &&
         bash plot.sh histograms/histograms.root plots/
