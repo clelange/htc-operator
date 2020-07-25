@@ -6,4 +6,8 @@ USER=$(echo "$KRBUSER" | awk -F '@' '{print $1}')
 export USER
 kinit -kt /secret/keytabvol/keytab "${KRBUSER}"
 myschedd show
-condor_rm "$@"
+# We want re-splitting here
+# shellcheck disable=SC2068
+for job in $@; do
+    condor_rm "$job"
+done
