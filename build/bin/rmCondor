@@ -4,8 +4,6 @@ set -x
 KRBUSER=$(cat /secret/keytabvol/user)
 USER=$(echo "$KRBUSER" | awk -F '@' '{print $1}')
 export USER
-# export _condor_SCHEDD_HOST="bigbird10.cern.ch"
-# export _condor_CREDD_HOST="bigbird10.cern.ch"
 kinit -kt /secret/keytabvol/keytab "${KRBUSER}"
 myschedd show
 condor_rm "$@"
