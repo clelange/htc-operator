@@ -189,19 +189,24 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
 	instance.Status.Succeeded = 0
 	instance.Status.Failed = 0
 	for i, s := range everyJobStatus {
-		switch s {
+		modulus := s % 10
+		switch modulus {
 		case 1:
 			instance.Status.Active++
 		case 4:
 			instance.Status.Succeeded++
-			r.transferCondorJob(instance.Status.JobId[i])
-			// Update job status adding 10
-			updateJobStatus(instance.Name, instance.Status.JobId[i], s+10)
+			if s < 10 {
+				r.transferCondorJob(instance.Status.JobId[i])
+				// Update job status adding 10
+				updateJobStatus(instance.Name, instance.Status.JobId[i], s+10)
+			}
 		case 7:
 			instance.Status.Failed++
 			// For now, also transfer output in case of failed job
-			r.transferCondorJob(instance.Status.JobId[i])
-			updateJobStatus(instance.Name, instance.Status.JobId[i], s+10)
+			if s < 10 {
+				r.transferCondorJob(instance.Status.JobId[i])
+				updateJobStatus(instance.Name, instance.Status.JobId[i], s+10)
+			}
 		}
 	}
 	err = r.client.Status().Update(context.TODO(), instance)
@@ -225,6 +230,7 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
 				fmt.Printf("Error getting job temporary directory: %v\n", err)
 			} else {
 				outDir := fmt.Sprintf("/data/htc_out/%s", instance.Name)
+				fmt.Printf("Copying files from %s to %s\n", tempDir, outDir)
 				err = CopyDir(tempDir, outDir)
 				if err != nil {
 					fmt.Printf("Failed to copy job output from temporary directory: %v\n", err)
