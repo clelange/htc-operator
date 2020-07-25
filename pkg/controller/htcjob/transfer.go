@@ -16,7 +16,7 @@ func (r *ReconcileHTCJob) transferCondorJob(jobID string) error {
 			fmt.Printf("Transferred output for %v: %v", jobID, string(out))
 			break
 		}
-		fmt.Errorf("ERROR in transferCondor, trying again: %v", err)
+		fmt.Printf("ERROR in transferCondor, trying again: %v", err)
 	}
 
 	return nil
