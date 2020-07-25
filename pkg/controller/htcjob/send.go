@@ -28,6 +28,7 @@ func (r *ReconcileHTCJob) submitCondorJob(v *htcv1alpha1.HTCJob) ([]string, erro
 		"echo $1\n" +
 		"cat script.sh\n" +
 		"singularity exec" +
+		" --contain --ipc --pid" +
 		" --bind /cvmfs" +
 		" --bind /afs" +
 		" --bind /eos" +
@@ -51,9 +52,9 @@ func (r *ReconcileHTCJob) submitCondorJob(v *htcv1alpha1.HTCJob) ([]string, erro
 		fmt.Sprintf("queue %d\n", queueNo)
 	// submit the job to HTC
 	// write files
-	errmsg, err := sendJob(v.Spec.Script.Source, jobShellScript, jobSubFile, tdName)
+	err = sendJob(v.Spec.Script.Source, jobShellScript, jobSubFile, tdName)
 	if err != nil {
-		fmt.Println(errmsg)
+		fmt.Println(err)
 		return nil, err
 	}
 	// record the submission in a database
@@ -66,35 +67,34 @@ func (r *ReconcileHTCJob) submitCondorJob(v *htcv1alpha1.HTCJob) ([]string, erro
 }
 
 func sendJob(script string, jobShellScript string, jobSubFile string,
-	tempDirName string) (string, error) {
+	tempDirName string) error {
 	err := ioutil.WriteFile(path.Join(tempDirName, "script.sh"),
 		[]byte(script), 0777)
 	if err != nil {
-		return "Failed writing script file", err
+		return fmt.Errorf("Failed writing script file: %v", err)
 	}
 	err = ioutil.WriteFile(path.Join(tempDirName, "job.sh"),
 		[]byte(jobShellScript), 0444)
 	if err != nil {
-		return "Failed writing job script file", err
+		return fmt.Errorf("Failed writing job script file: %v", err)
 	}
 	err = ioutil.WriteFile(path.Join(tempDirName, "job.sub"),
 		[]byte(jobSubFile), 0444)
 	if err != nil {
-		return "Failed writing job submission file", err
+		return fmt.Errorf("Failed writing job submission file: %v", err)
 	}
 	// submit the job
 	// try twice
 	for tries := 1; true; tries++ {
 		out, err := exec.Command("subCondor", tempDirName).CombinedOutput()
 		if err != nil && tries >= 2 {
-			return "Failed job submission", err
+			return fmt.Errorf("Failed job submission: %v", err)
 		}
 		if err == nil {
 			fmt.Println(string(out))
 			break
 		}
-		fmt.Println("ERROR in send, subCondor")
-		fmt.Println(err)
+		fmt.Printf("First submit attempt to HTCondor failed, trying again: %v", string(out))
 	}
-	return "", nil
+	return nil
 }

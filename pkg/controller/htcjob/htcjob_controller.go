@@ -187,14 +187,17 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
 	instance.Status.Active = 0
 	instance.Status.Succeeded = 0
 	instance.Status.Failed = 0
-	for _, s := range everyJobStatus {
+	for i, s := range everyJobStatus {
 		switch s {
 		case 1:
 			instance.Status.Active++
 		case 4:
 			instance.Status.Succeeded++
+			r.transferCondorJob(instance.Status.JobId[i])
 		case 7:
 			instance.Status.Failed++
+			// For now, also transfer output in case of failed job
+			r.transferCondorJob(instance.Status.JobId[i])
 		}
 	}
 	err = r.client.Status().Update(context.TODO(), instance)

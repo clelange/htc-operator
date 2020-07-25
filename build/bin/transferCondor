@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -x
+KRBUSER=$(cat /secret/keytabvol/user)
+USER=$(echo "$KRBUSER" | awk -F '@' '{print $1}')
+export USER
+kinit -kt /secret/keytabvol/keytab "${KRBUSER}"
+myschedd show
+condor_transfer_data "$@"
