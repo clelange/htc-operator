@@ -12,3 +12,5 @@ chmod ug+rwx "${HOME}"
 su "$USER_NAME" -c "ensureDB"
 su "$USER_NAME" -c "receiver &"
 su "$USER_NAME" -c "/htc-operator"
+KRBUSER=$(cat /secret/keytabvol/user)
+kinit -kt /secret/keytabvol/keytab "${KRBUSER}"

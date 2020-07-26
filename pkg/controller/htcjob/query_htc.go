@@ -22,8 +22,12 @@ func queryStatus(clusterID string) error {
 	if err != nil {
 		return fmt.Errorf("StdoutPipe error: %v", err)
 	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return fmt.Errorf("StderrPipe error: %v", err)
+	}
 	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("StdoutPipe error: %v", err)
+		return fmt.Errorf("Start error: %v", err)
 	}
 	var htcStatusList []htcStatus
 	if err := json.NewDecoder(stdout).Decode(&htcStatusList); err != nil {
@@ -31,6 +35,9 @@ func queryStatus(clusterID string) error {
 	}
 	if err := cmd.Wait(); err != nil {
 		return fmt.Errorf("Wait error: %v", err)
+	}
+	if stderr != nil {
+		fmt.Printf("Something went wrong with API query: %v\n", stderr)
 	}
 	fmt.Print(htcStatusList)
 	return nil

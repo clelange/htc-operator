@@ -177,7 +177,7 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
 	// a job is active => check if it's marked as running in the database
 	err = queryStatus(instance.Status.ClusterID)
 	if err != nil {
-		fmt.Printf("Problem querying status: %v", err)
+		reqLogger.Error(err, "Problem querying status using python API")
 	}
 	var everyJobStatus []int
 	for _, currentJobID := range instance.Status.JobIDs {

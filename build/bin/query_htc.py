@@ -3,6 +3,7 @@ from __future__ import print_function
 import sys
 import argparse
 import json
+import subprocess
 import htcondor
 
 
@@ -50,6 +51,15 @@ def query(cluster_ids):
     print(json.dumps(status))
 
 
+def get_krb_token():
+    with open('/secret/keytabvol/user', 'r') as reader:
+        krb_user = reader.readline()
+    cmd_out = subprocess.Popen(['kinit', '-kt', '/secret/keytabvol/keytab', krb_user],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT)
+    stdout,stderr = cmd_out.communicate()
+
+
 def main():
 
     parser = argparse.ArgumentParser(
@@ -67,6 +77,8 @@ def main():
                             default=False,
                             help='Query status')
     args = parser.parse_args()
+
+    get_krb_token()
 
     if args.transfer:
         transfer(args.cluster_ids)
