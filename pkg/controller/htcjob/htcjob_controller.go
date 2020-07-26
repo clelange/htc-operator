@@ -87,8 +87,6 @@ type ReconcileHTCJob struct {
 	scheme *runtime.Scheme
 }
 
-// Reconcile reads that state of the cluster for a HTCJob object and makes changes based on the state read
-// and what is in the HTCJob.Spec
 // TODO(user): Modify this Reconcile function to implement your Controller logic.  This example creates
 // a Pod as an example
 // Note:
@@ -96,6 +94,8 @@ type ReconcileHTCJob struct {
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 const htcjobFinalizer = "finalizer.htc.cern.ch"
 
+// Reconcile reads that state of the cluster for a HTCJob object and makes changes based on the state read
+// and what is in the HTCJob.Spec
 func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
 	reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace,
@@ -140,9 +140,9 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
 		}
 	}
 	// generate unique Id
-	if instance.Status.UniqId == 0 {
-		instance.Status.UniqId = rand.Int()
-		instance.Status.JobId = make([]string, 0)
+	if instance.Status.UniqID == 0 {
+		instance.Status.UniqID = rand.Int()
+		instance.Status.JobIDs = make([]string, 0)
 		err := r.client.Status().Update(context.TODO(), instance)
 		if err != nil {
 			reqLogger.Error(err, "Failed to update HTCJob status (uniqid)")
@@ -152,8 +152,8 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
 	// Check if the Job already exists
 	htcjobName := instance.Name
 	// uniqid makes cleanup easier in case of failure or in the finalizer
-	uniqID := instance.Status.UniqId
-	if len(instance.Status.JobId) == 0 {
+	uniqID := instance.Status.UniqID
+	if len(instance.Status.JobIDs) == 0 {
 		// send the job and add an entry in the db
 		// (after adding to active so many jobs dont get rescheduled)
 		jobID, err := r.submitCondorJob(instance)
@@ -163,7 +163,7 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
 			return reconcile.Result{}, err
 		}
 		// record the jobId in Status
-		instance.Status.JobId = jobID
+		instance.Status.JobIDs = jobID
 		instance.Status.Active = len(jobID)
 		err = r.client.Status().Update(context.TODO(), instance)
 		if err != nil {
@@ -176,7 +176,7 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
 	}
 	// a job is active => check if it's marked as running in the database
 	var everyJobStatus []int
-	for _, currentJobID := range instance.Status.JobId {
+	for _, currentJobID := range instance.Status.JobIDs {
 		jobStatus, err := getJobStatus(instance.Name, currentJobID)
 		if err != nil {
 			reqLogger.Error(err, "Failed to get the status of an htcjob (Waiting)")
@@ -196,16 +196,16 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
 		case 4:
 			instance.Status.Succeeded++
 			if s < 10 {
-				r.transferCondorJob(instance.Status.JobId[i])
+				r.transferCondorJob(instance.Status.JobIDs[i])
 				// Update job status adding 10
-				updateJobStatus(instance.Name, instance.Status.JobId[i], s+10)
+				updateJobStatus(instance.Name, instance.Status.JobIDs[i], s+10)
 			}
 		case 7:
 			instance.Status.Failed++
 			// For now, also transfer output in case of failed job
 			if s < 10 {
-				r.transferCondorJob(instance.Status.JobId[i])
-				updateJobStatus(instance.Name, instance.Status.JobId[i], s+10)
+				r.transferCondorJob(instance.Status.JobIDs[i])
+				updateJobStatus(instance.Name, instance.Status.JobIDs[i], s+10)
 			}
 		}
 	}
@@ -225,7 +225,7 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
 			}
 		}
 		if copyOutput {
-			tempDir, err := getJobTempDir(instance.Name, instance.Status.JobId[0])
+			tempDir, err := getJobTempDir(instance.Name, instance.Status.JobIDs[0])
 			if err != nil {
 				fmt.Printf("Error getting job temporary directory: %v\n", err)
 			} else {
@@ -235,7 +235,7 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
 				if err != nil {
 					fmt.Printf("Failed to copy job output from temporary directory: %v\n", err)
 				}
-				updateJobStatus(instance.Name, instance.Status.JobId[0], everyJobStatus[0]+10)
+				updateJobStatus(instance.Name, instance.Status.JobIDs[0], everyJobStatus[0]+10)
 			}
 		}
 		return reconcile.Result{RequeueAfter: time.Second * 30}, nil
@@ -245,11 +245,11 @@ func (r *ReconcileHTCJob) Reconcile(request reconcile.Request) (
 
 func (r *ReconcileHTCJob) finalizeHTCJob(v *htcv1alpha1.HTCJob) error {
 	// the actual cleanup is done here
-	out, _ := exec.Command("rmCondor", strings.Join(v.Status.JobId, " ")).CombinedOutput()
-	fmt.Println(strings.Join(v.Status.JobId, " "))
+	out, _ := exec.Command("rmCondor", strings.Join(v.Status.JobIDs, " ")).CombinedOutput()
+	fmt.Println(strings.Join(v.Status.JobIDs, " "))
 	fmt.Println(string(out))
-	if len(v.Status.JobId) > 0 {
-		tempDir, err := getJobTempDir(v.Name, v.Status.JobId[0])
+	if len(v.Status.JobIDs) > 0 {
+		tempDir, err := getJobTempDir(v.Name, v.Status.JobIDs[0])
 		if err != nil {
 			fmt.Printf("Error getting job temporary directory: %v\n", err)
 		} else {
@@ -260,7 +260,7 @@ func (r *ReconcileHTCJob) finalizeHTCJob(v *htcv1alpha1.HTCJob) error {
 		}
 	}
 	// delete from sqlite
-	for _, jobID := range v.Status.JobId {
+	for _, jobID := range v.Status.JobIDs {
 		rmJob(v.Name, jobID)
 	}
 	return nil

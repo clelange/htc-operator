@@ -29,14 +29,14 @@ func main() {
 	}
 	// get job name
 	jobName := os.Getenv("JOB_NAME")
-	jobId := getJobId()
+	jobID := getJobID()
 
 	e := cloudevents.NewEvent()
 	e.SetType("htcjob.cloudevent")
 	e.SetSource("cern.ch")
 	_ = e.SetData(cloudevents.ApplicationJSON, map[string]interface{}{
 		"name":    jobName,
-		"jobid":   jobId,
+		"jobid":   jobID,
 		"retcode": os.Args[1],
 	})
 
@@ -46,8 +46,8 @@ func main() {
 	}
 }
 
-func getJobId() string {
-	var clusterId, procId string
+func getJobID() string {
+	var clusterID, procID string
 
 	buf, err := os.Open(".job.ad")
 	if err != nil {
@@ -57,15 +57,18 @@ func getJobId() string {
 	defer buf.Close()
 
 	snl := bufio.NewScanner(buf)
+	// The file .job.ad contains lines describing the jobID, e.g.:
+	// ClusterId = 3974861
+	// ProcId = 0
 	reCluster := regexp.MustCompile(`^ClusterId = (.*)$`)
 	reProc := regexp.MustCompile(`^ProcId = (.*)$`)
 	for snl.Scan() {
 		currText := snl.Text()
 		if reCluster.MatchString(currText) {
-			clusterId = reCluster.ReplaceAllString(currText, `$1`)
+			clusterID = reCluster.ReplaceAllString(currText, `$1`)
 		}
 		if reProc.MatchString(currText) {
-			procId = reProc.ReplaceAllString(currText, `$1`)
+			procID = reProc.ReplaceAllString(currText, `$1`)
 		}
 	}
 	err = snl.Err()
@@ -73,5 +76,5 @@ func getJobId() string {
 		fmt.Println("File reading error")
 		return "ERROR"
 	}
-	return fmt.Sprintf("%s.%s", clusterId, procId)
+	return fmt.Sprintf("%s.%s", clusterID, procID)
 }

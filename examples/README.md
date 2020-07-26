@@ -14,7 +14,8 @@ the HTCJob is marked as `succeeded`.
   status:
     active: 0
     failed: 0
-    jobid:
+    clusterID: "891628"
+    jobIDs:
     - "891628.0"
     succeeded: 1
 ```
@@ -26,7 +27,8 @@ which marks the HTCJob status as `failed`.
   status:
     active: 0
     failed: 1
-    jobid:
+    clusterID: "891629"
+    jobIDs:
     - "891629.0"
     succeeded: 0
 ```

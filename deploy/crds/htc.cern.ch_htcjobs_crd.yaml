@@ -61,13 +61,15 @@ spec:
               type: integer
             failed:
               type: integer
-            jobid:
+            clusterID:
+              type: string
+            jobIDs:
               items:
                 type: string
               type: array
             succeeded:
               type: integer
-            uniqid:
+            uniqID:
               type: integer
           required:
           - active

@@ -58,7 +58,7 @@ func (r *ReconcileHTCJob) submitCondorJob(v *htcv1alpha1.HTCJob) ([]string, erro
 		return nil, err
 	}
 	// record the submission in a database
-	jobID, err := recordSubmission(v.Name, tdName, v.Status.UniqId)
+	jobID, err := recordSubmission(v.Name, tdName, v.Status.UniqID)
 	if err != nil {
 		fmt.Print("Failed to record the fact of submission in the DB")
 		return nil, err
@@ -74,7 +74,7 @@ func sendJob(script string, jobShellScript string, jobSubFile string,
 		return fmt.Errorf("Failed writing script file: %v", err)
 	}
 	err = ioutil.WriteFile(path.Join(tempDirName, "job.sh"),
-		[]byte(jobShellScript), 0444)
+		[]byte(jobShellScript), 0777)
 	if err != nil {
 		return fmt.Errorf("Failed writing job script file: %v", err)
 	}
