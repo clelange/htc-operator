@@ -16,7 +16,7 @@ type htcStatus struct {
 }
 
 func queryStatus(clusterID string) error {
-	cmd := exec.Command("python", "query_htc.py", "--status", clusterID)
+	cmd := exec.Command("query_htc.sh", "--status", clusterID)
 	log.Info("Querying job status using python API")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
