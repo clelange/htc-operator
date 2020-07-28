@@ -27,9 +27,9 @@ func (r *ReconcileHTCJob) submitCondorJob(v *htcv1alpha1.HTCJob) ([]string, erro
 		"ls\n" +
 		"echo $1\n" +
 		"cat script.sh\n" +
-		"HTCPROCID=$(echo $JOBFEATURES | awk -F '_' '{ print $(NF-1) }' | awk -F '.' '{ print $NF })'\n" +
-		"echo $HTCPROCID \n" +
-		"SINGULARITYENV_HTCPROCID=${HTCPROCID} singularity exec" +
+		"MYHTCPROCID=$(echo $JOBFEATURES | awk -F '_' '{ print $(NF-1) }' | awk -F '.' '{ print $NF })'\n" +
+		"echo $MYHTCPROCID \n" +
+		"SINGULARITYENV_HTCPROCID=${MYHTCPROCID} singularity exec" +
 		" --contain --ipc --pid" +
 		" --bind /cvmfs" +
 		" --bind /afs" +
