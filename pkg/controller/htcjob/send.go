@@ -47,6 +47,9 @@ func (r *ReconcileHTCJob) submitCondorJob(v *htcv1alpha1.HTCJob) ([]string, erro
 		"error                   = err.$(ClusterId).$(ProcId)\n" +
 		"log                     = log.$(ClusterId).$(ProcId)\n" +
 		"transfer_input_files    = script.sh, /usr/local/bin/sender\n" +
+		"on_exit_remove          = (ExitBySignal == False) && (ExitCode == 0)\n" +
+		"max_retries             = 3\n" +
+		"requirements = Machine =!= LastRemoteHost\n" +
 		fmt.Sprintf("environment = \"JOB_NAME=%s TEMP_DIR=%s\"\n", v.Name, tdName) +
 		fmt.Sprintf("\n%s\n", v.Spec.HTCopts) +
 		fmt.Sprintf("queue %d\n", queueNo)
